@@ -1,0 +1,36 @@
+/* ==========================================
+   Global Styles
+========================================== */
+@font-face {
+    font-family: "Pink Lemonade";
+    src: url("../assets/fonts/PinkLemonade-Regular.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: "Pink Lemonade", sans-serif;
+    background: #000;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #ffffff;
+}
+
+img {
+    display: block;
+    max-width: 100%;
+}

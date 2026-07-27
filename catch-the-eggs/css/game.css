@@ -1,0 +1,81 @@
+/* ==========================================
+   Main Game Layout
+========================================== */
+.game-shell {
+    width: 100vw;
+    height: 100vh;
+}
+
+.game-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #111;
+}
+
+/* ==========================================
+   Main Game Canvas
+========================================== */
+#gameCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #000;
+}
+
+/* ==========================================
+   Webcam Preview Canvas
+========================================== */
+/* #webcamCanvas {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    height: 200px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: #000;
+    z-index: 10;
+} */
+
+/* ==========================================
+   Webcam Preview Canvas
+========================================== */
+#webcamCanvas {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    height: 200px;
+
+    background: #000;
+    z-index: 100;
+}
+
+/* Hidden video used for webcam input */
+#webcamVideo {
+    display: none;
+}
+
+/* ==========================================
+   Responsive Layout
+========================================== */
+@media (max-width: 768px) {
+    .game-shell {
+        width: 100vw;
+        height: 100vh;
+    }
+
+    .game-stage {
+        width: 100%;
+        height: 100%;
+    }
+
+    #webcamCanvas {
+        width: 150px;
+        height: 112px;
+        bottom: 10px;
+        right: 10px;
+    }
+}
