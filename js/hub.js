@@ -2,20 +2,23 @@ import { HandTracker } from "../shared/js/handTracking.js";
 import { GestureSystem } from "../shared/js/gestureSystem.js";
 
 let handTracker, gestureSystem;
-let activeIndex = 0;
 const cards = document.querySelectorAll('.game-card');
 
 window.addEventListener("DOMContentLoaded", async () => {
 
-    // Setup Hand Tracking
     handTracker = new HandTracker();
     await handTracker.setup();
 
     gestureSystem = new GestureSystem(handTracker);
 
-    // Thumbs Up: Launch the highlighted game
-    gestureSystem.on("THUMBS_UP", () => {
-        startGame(activeIndex);
+    // 1 Finger: Launch Game 1 (Catch the Eggs)
+    gestureSystem.on("ONE_FINGER", () => {
+        startGame(0);
+    });
+
+    // 2 Fingers (Peace Sign): Launch Game 2 (Flappy Bird)
+    gestureSystem.on("PEACE_SIGN", () => {
+        startGame(1);
     });
 
     // Mouse click fallback
@@ -24,38 +27,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             startGame(index);
         });
     });
-
-    // Loop to check hand position for selection
-    setInterval(updateSelectionByHand, 100);
 });
-
-function updateSelectionByHand() {
-    if (!handTracker.isHandDetected()) return;
-
-    const handX = handTracker.getHandX();
-    const cameraWidth = 640;
-
-    // If hand is on left half of camera, select first game
-    if (handX < cameraWidth / 2 && activeIndex !== 0) {
-        activeIndex = 0;
-        updateActiveCard();
-    }
-    // If hand is on right half, select second game
-    else if (handX >= cameraWidth / 2 && activeIndex !== 1) {
-        activeIndex = 1;
-        updateActiveCard();
-    }
-}
-
-function updateActiveCard() {
-    cards.forEach((card, index) => {
-        if (index === activeIndex) {
-            card.classList.add('active');
-        } else {
-            card.classList.remove('active');
-        }
-    });
-}
 
 function startGame(index) {
     const gameUrl = cards[index].getAttribute('data-game');
