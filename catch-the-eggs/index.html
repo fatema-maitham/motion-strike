@@ -4,18 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catchy</title>
+    <title>Catch the Eggs</title>
+
+    <link rel="stylesheet" href="../../shared/css/shared.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/game.css">
 </head>
 
 <body>
     <main class="game-shell">
+
         <section class="game-stage">
             <canvas id="gameCanvas"></canvas>
-            <video id="webcamVideo" autoplay playsinline muted></video>
-            <canvas id="webcamCanvas" width="640" height="480"></canvas>
         </section>
+
+        <aside class="camera-panel">
+            <p class="camera-label">📷 Your Camera</p>
+            <canvas id="webcamCanvas" width="640" height="480"></canvas>
+            <video id="webcamVideo" autoplay playsinline muted></video>
+        </aside>
+
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>

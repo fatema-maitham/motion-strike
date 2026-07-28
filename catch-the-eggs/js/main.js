@@ -1,6 +1,6 @@
 import { loadImages, loadAudio } from "./utils.js";
 import { Game } from "./game.js";
-import { HandTracker } from "./handTracking.js";
+import { HandTracker } from "../../shared/js/handTracking.js";
 
 const ASSET_SOURCES = {
     background: "assets/images/background.png",
@@ -20,8 +20,29 @@ const SOUND_SOURCES = {
 };
 
 function resizeCanvas(canvas) {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const stage = document.querySelector(".game-stage");
+    const maxW = stage.clientWidth - 50;
+    const maxH = stage.clientHeight - 50;
+
+    // Aspect ratio (make it wider for catching eggs)
+    const ratio = 16 / 10;
+
+    let dw = maxW;
+    let dh = maxW / ratio;
+
+    // If too tall, shrink based on height
+    if (dh > maxH) {
+        dh = maxH;
+        dw = maxH * ratio;
+    }
+
+    // Internal resolution matches display size
+    canvas.width = Math.floor(dw);
+    canvas.height = Math.floor(dh);
+
+    // CSS size
+    canvas.style.width = Math.floor(dw) + "px";
+    canvas.style.height = Math.floor(dh) + "px";
 }
 
 window.CATCHY = {
@@ -83,7 +104,6 @@ window.addEventListener("DOMContentLoaded", async () => {
 window.addEventListener("resize", () => {
     const canvas = document.getElementById("gameCanvas");
     const game = window.CATCHY?.game;
-
     if (!canvas || !game) return;
 
     resizeCanvas(canvas);
