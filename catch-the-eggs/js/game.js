@@ -67,19 +67,8 @@ export class Game {
 
     start() {
         console.log("Game engine started");
-
         this.state = GAME_STATES.MENU;
         this.lastTime = performance.now();
-
-        // Unlock audio by playing a silent sound on first interaction
-        if (this.audio.sounds.catchEgg) {
-            this.audio.sounds.catchEgg.volume = 0;
-            this.audio.sounds.catchEgg.play().catch(() => { });
-            this.audio.sounds.catchEgg.pause();
-            this.audio.sounds.catchEgg.currentTime = 0;
-            this.audio.sounds.catchEgg.volume = 1;
-        }
-
         requestAnimationFrame(this.loop);
     }
 

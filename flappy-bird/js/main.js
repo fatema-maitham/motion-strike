@@ -1,17 +1,14 @@
-import { loadImages, loadAudio, loadFont } from "./utils.js";
 import { HandTracker } from "../../shared/js/handTracking.js";
 import { GestureSystem } from "../../shared/js/gestureSystem.js";
 import { Bird } from "./bird.js";
 import { PipePair } from "./pipe.js";
 import { birdHitPipe } from "./collision.js";
 
-/* ---- settings ---- */
 const GAME_WIDTH = 360;
 const GAME_HEIGHT = 640;
 const PIPE_INTERVAL = 2600;
 const GRACE_FRAMES = 60;
 
-/* ---- assets ---- */
 const ASSET_SOURCES = {
     background: "assets/images/background.png",
     bird: "assets/images/flappy-bird.png",
@@ -19,68 +16,61 @@ const ASSET_SOURCES = {
     pipeBottom: "assets/images/bottom-pipe.png",
 };
 
-/* ---- sounds ---- */
 const SOUND_SOURCES = {
     flap: "assets/sounds/flap.mp3",
     score: "assets/sounds/score.mp3",
     hit: "assets/sounds/hit.mp3"
 };
 
-/* ---- state ---- */
+function createImages(sources) {
+    const output = {};
+    for (const [key, src] of Object.entries(sources)) {
+        const img = new Image();
+        img.src = src;
+        output[key] = img;
+    }
+    return output;
+}
+
+function createSounds(sources) {
+    const output = {};
+    for (const [key, src] of Object.entries(sources)) {
+        output[key] = new Audio(src);
+    }
+    return output;
+}
+
 let canvas, ctx, assets;
 let handTracker, gestureSystem;
 let bird, pipes, score, frameCount;
 let gameState = "MENU";
 let lastTime = 0;
 let pipeTimer = 0;
-let flapReady = true;
 
-/* ---- audio state ---- */
 let sounds = {};
 let isMuted = false;
 
-/* ==========================================
-   Play Sound Helper
-========================================== */
 function playSound(name) {
     if (isMuted || !sounds[name]) return;
     sounds[name].currentTime = 0;
     sounds[name].play().catch(() => { });
 }
 
-/* ==========================================
-   Boot
-========================================== */
-window.addEventListener("DOMContentLoaded", async () => {
+window.addEventListener("DOMContentLoaded", () => {
     canvas = document.getElementById("gameCanvas");
     ctx = canvas.getContext("2d");
 
-    /* wait for Google Font to load */
-    await document.fonts.load("12px 'Press Start 2P'");
-    await document.fonts.load("10px 'Press Start 2P'");
-
-    /* set canvas internal size */
     canvas.width = GAME_WIDTH;
     canvas.height = GAME_HEIGHT;
     resizeCanvas();
 
-    assets = await loadImages(ASSET_SOURCES);
-
-    /* load sounds */
-    for (const [key, src] of Object.entries(SOUND_SOURCES)) {
-        sounds[key] = await loadAudio(src);
-    }
+    // No waiting
+    assets = createImages(ASSET_SOURCES);
+    sounds = createSounds(SOUND_SOURCES);
 
     handTracker = new HandTracker();
-    await handTracker.setup();
-
     gestureSystem = new GestureSystem(handTracker);
 
-    /* ==========================================
-       Gesture Controls
-    ========================================== */
-
-    // Open Palm: Flap (Playing) or Start/Restart (Menu/GameOver)
     gestureSystem.on("OPEN_PALM", () => {
         if (gameState === "PLAYING") {
             bird.flap();
@@ -90,43 +80,41 @@ window.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
-    // Thumbs Up: Start / Restart from Menu or Game Over
     gestureSystem.on("THUMBS_UP", () => {
         if (gameState === "MENU" || gameState === "GAMEOVER") {
             resetGame();
         }
     });
 
-    // Peace Sign: Pause / Resume
     gestureSystem.on("PEACE_SIGN", () => {
         if (gameState === "PLAYING") {
             gameState = "PAUSED";
         } else if (gameState === "PAUSED") {
             gameState = "PLAYING";
-            lastTime = performance.now(); // Prevent time jump
+            lastTime = performance.now();
         }
     });
 
-    // Pinch: Mute / Unmute
     gestureSystem.on("PINCH", () => {
         isMuted = !isMuted;
         console.log("Audio muted:", isMuted);
     });
 
-    // Wave: Return to Main Menu
     gestureSystem.on("WAVE", () => {
         window.location.href = "../../index.html";
     });
 
-    /* ==========================================
-       Keyboard and Click Controls
-    ========================================== */
     window.addEventListener("keydown", onKey);
     canvas.addEventListener("click", onTap);
 
-    /* ==========================================
-       Unlock Audio on First Interaction
-    ========================================== */
+    // Start immediately
+    gameState = "MENU";
+    lastTime = performance.now();
+    requestAnimationFrame(loop);
+
+    // Camera / hand tracking starts in background
+    handTracker.setup();
+
     const unlockAudio = () => {
         for (const audio of Object.values(sounds)) {
             if (audio) {
@@ -142,19 +130,8 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     document.addEventListener("click", unlockAudio);
     document.addEventListener("touchstart", unlockAudio);
-
-    /* start on menu */
-    gameState = "MENU";
-    lastTime = performance.now();
-    requestAnimationFrame(loop);
 });
 
-/* ==========================================
-   Canvas Sizing
-
-   Internal resolution is ALWAYS 360x640
-   CSS scales it up visually
-========================================== */
 function resizeCanvas() {
     const stage = document.querySelector(".game-stage");
     const maxW = stage.clientWidth - 40;
@@ -174,27 +151,19 @@ function resizeCanvas() {
     canvas.style.height = Math.floor(dh) + "px";
 }
 
-/* ==========================================
-   Reset
-========================================== */
 function resetGame() {
     bird = new Bird(canvas, assets);
     pipes = [];
     score = 0;
     frameCount = 0;
     pipeTimer = 0;
-    flapReady = true;
     gameState = "PLAYING";
-    lastTime = performance.now(); // Prevent time jump
+    lastTime = performance.now();
 }
 
-/* ==========================================
-   Keyboard Input
-========================================== */
 function onKey(e) {
     if (e.code === "Space") {
         e.preventDefault();
-
         if (gameState === "PLAYING") {
             bird.flap();
             playSound("flap");
@@ -203,10 +172,8 @@ function onKey(e) {
         }
     }
 
-    // P key to pause/resume
     if (e.code === "KeyP") {
         e.preventDefault();
-
         if (gameState === "PLAYING") {
             gameState = "PAUSED";
         } else if (gameState === "PAUSED") {
@@ -215,16 +182,12 @@ function onKey(e) {
         }
     }
 
-    // M key to mute/unmute
     if (e.code === "KeyM") {
         isMuted = !isMuted;
         console.log("Audio muted:", isMuted);
     }
 }
 
-/* ==========================================
-   Click / Tap Input
-========================================== */
 function onTap() {
     if (gameState === "PLAYING") {
         bird.flap();
@@ -234,9 +197,6 @@ function onTap() {
     }
 }
 
-/* ==========================================
-   Game Loop
-========================================== */
 function loop(now) {
     let dt = (now - lastTime) / 1000;
     dt = Math.min(dt, 0.1);
@@ -248,26 +208,19 @@ function loop(now) {
     requestAnimationFrame(loop);
 }
 
-/* ==========================================
-   Update
-========================================== */
 function update(dt) {
-    // Freeze game if not playing
     if (gameState !== "PLAYING") return;
 
     frameCount++;
     pipeTimer += dt * 1000;
 
-    /* spawn pipes */
     if (pipeTimer >= PIPE_INTERVAL) {
         pipeTimer = 0;
         pipes.push(new PipePair(GAME_WIDTH, GAME_HEIGHT, assets));
     }
 
-    /* update bird */
     bird.update(dt);
 
-    /* update pipes + scoring */
     for (const pipe of pipes) {
         pipe.update(dt);
 
@@ -278,29 +231,20 @@ function update(dt) {
         }
     }
 
-    /* remove off-screen pipes */
     pipes = pipes.filter(p => !p.isOffScreen());
 
-    /* collision — grace period */
     if (frameCount > GRACE_FRAMES) {
-        if (
-            bird.isOutOfBounds(GAME_HEIGHT) ||
-            pipes.some(p => birdHitPipe(bird, p))
-        ) {
+        if (bird.isOutOfBounds(GAME_HEIGHT) || pipes.some(p => birdHitPipe(bird, p))) {
             gameState = "GAMEOVER";
             playSound("hit");
         }
     }
 }
 
-/* ==========================================
-   Draw
-========================================== */
 function draw() {
     ctx.imageSmoothingEnabled = true;
     ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    /* background */
     if (assets.background) {
         ctx.drawImage(assets.background, 0, 0, GAME_WIDTH, GAME_HEIGHT);
     } else {
@@ -308,29 +252,18 @@ function draw() {
         ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     }
 
-    /* only draw game elements if not on menu */
     if (gameState !== "MENU") {
-        /* pipes */
         for (const pipe of pipes) {
             pipe.draw(ctx);
         }
-
-        /* bird */
         bird.draw(ctx);
     }
 
-    /* HUD */
     drawHUD();
-
-    /* Overlays (Menu, Pause, Game Over) */
     drawOverlay();
 }
 
-/* ==========================================
-   HUD
-========================================== */
 function drawHUD() {
-    // Only show score when playing or paused
     if (gameState !== "PLAYING" && gameState !== "PAUSED") return;
 
     ctx.save();
@@ -339,13 +272,11 @@ function drawHUD() {
     ctx.lineWidth = 3;
     ctx.textBaseline = "top";
 
-    /* score */
     ctx.font = "12px 'Press Start 2P'";
     ctx.textAlign = "left";
     ctx.strokeText("Score: " + score, 10, 10);
     ctx.fillText("Score: " + score, 10, 10);
 
-    /* get ready */
     if (gameState === "PLAYING" && frameCount < GRACE_FRAMES) {
         ctx.font = "10px 'Press Start 2P'";
         ctx.textAlign = "center";
@@ -356,9 +287,6 @@ function drawHUD() {
     ctx.restore();
 }
 
-/* ==========================================
-   Overlays (Menu, Pause, Game Over)
-========================================== */
 function drawOverlay() {
     if (gameState === "MENU") {
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
@@ -382,9 +310,6 @@ function drawOverlay() {
     }
 }
 
-/* ==========================================
-   Center Text Helper
-========================================== */
 function drawCenterText(text, size, yOffset = 0) {
     ctx.save();
     ctx.font = `${size}px 'Press Start 2P'`;

@@ -2,13 +2,11 @@ import { HandTracker } from "../shared/js/handTracking.js";
 import { GestureSystem } from "../shared/js/gestureSystem.js";
 
 let handTracker, gestureSystem;
-const cards = document.querySelectorAll('.game-card');
 
-window.addEventListener("DOMContentLoaded", async () => {
+window.addEventListener("DOMContentLoaded", () => {
+    const cards = document.querySelectorAll('.game-card');
 
     handTracker = new HandTracker();
-    await handTracker.setup();
-
     gestureSystem = new GestureSystem(handTracker);
 
     // 1 Finger: Launch Game 1 (Catch the Eggs)
@@ -27,10 +25,15 @@ window.addEventListener("DOMContentLoaded", async () => {
             startGame(index);
         });
     });
-});
 
-function startGame(index) {
-    const gameUrl = cards[index].getAttribute('data-game');
-    console.log("Launching game:", gameUrl);
-    window.location.href = gameUrl;
-}
+    // Start camera AFTER everything is set up
+    handTracker.setup().then(() => {
+        console.log("Hub: Hand tracking ready");
+    });
+
+    function startGame(index) {
+        const gameUrl = cards[index].getAttribute('data-game');
+        console.log("Launching game:", gameUrl);
+        window.location.href = gameUrl;
+    }
+});

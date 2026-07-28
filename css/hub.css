@@ -12,10 +12,10 @@
     cursor: pointer;
     border-radius: 24px;
     overflow: hidden;
-    border: 6px solid transparent;
+    border: 6px solid #c7b598;
     transition: all 0.3s ease;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-    background: #000;
+    background: #FFF4B8;
 }
 
 .game-card img {
@@ -29,4 +29,8 @@
 .game-card:hover {
     border-color: #f39c12;
     transform: scale(1.05);
+}
+
+body {
+    background-color: #f9f8f7;
 }

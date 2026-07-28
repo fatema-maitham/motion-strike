@@ -1,8 +1,4 @@
 export {
-    loadImage,
-    loadImages,
-    loadAudio,
-    loadFont,
     randomBetween,
     randomInt,
     clamp,

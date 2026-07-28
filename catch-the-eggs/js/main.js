@@ -1,4 +1,3 @@
-import { loadImages, loadAudio } from "./utils.js";
 import { Game } from "./game.js";
 import { HandTracker } from "../../shared/js/handTracking.js";
 import { GestureSystem } from "../../shared/js/gestureSystem.js";
@@ -20,28 +19,41 @@ const SOUND_SOURCES = {
     bomb: "assets/sounds/bomb.wav"
 };
 
+function createImages(sources) {
+    const output = {};
+    for (const [key, src] of Object.entries(sources)) {
+        const img = new Image();
+        img.src = src;
+        output[key] = img;
+    }
+    return output;
+}
+
+function createSounds(sources) {
+    const output = {};
+    for (const [key, src] of Object.entries(sources)) {
+        output[key] = new Audio(src);
+    }
+    return output;
+}
+
 function resizeCanvas(canvas) {
     const stage = document.querySelector(".game-stage");
     const maxW = stage.clientWidth - 150;
     const maxH = stage.clientHeight - 150;
 
-    // Aspect ratio (16/10 for a nice widescreen feel)
     const ratio = 16 / 10;
 
     let dw = maxW;
     let dh = maxW / ratio;
 
-    // If too tall, shrink based on height
     if (dh > maxH) {
         dh = maxH;
         dw = maxH * ratio;
     }
 
-    // Internal resolution matches display size
     canvas.width = Math.floor(dw);
     canvas.height = Math.floor(dh);
-
-    // CSS size
     canvas.style.width = Math.floor(dw) + "px";
     canvas.style.height = Math.floor(dh) + "px";
 }
@@ -54,22 +66,16 @@ window.CATCHY = {
     handTracker: null,
 };
 
-/* ==========================================
-   Boot
-========================================== */
-window.addEventListener("DOMContentLoaded", async () => {
+window.addEventListener("DOMContentLoaded", () => {
     try {
         const canvas = document.getElementById("gameCanvas");
         if (!canvas) return;
 
         resizeCanvas(canvas);
 
-        const assets = await loadImages(ASSET_SOURCES);
-
-        const sounds = {};
-        for (const [key, src] of Object.entries(SOUND_SOURCES)) {
-            sounds[key] = await loadAudio(src);
-        }
+        // No waiting
+        const assets = createImages(ASSET_SOURCES);
+        const sounds = createSounds(SOUND_SOURCES);
 
         window.CATCHY.assets = assets;
         window.CATCHY.sounds = sounds;
@@ -80,19 +86,15 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         const handTracker = new HandTracker();
         window.CATCHY.handTracker = handTracker;
-        await handTracker.setup();
 
-        // Initialize Shared Gesture System
         const gestureSystem = new GestureSystem(handTracker);
 
-        // Thumbs Up: Start / Restart
         gestureSystem.on("THUMBS_UP", () => {
             if (game.state === "MENU" || game.state === "GAME_OVER") {
                 game.restart();
             }
         });
 
-        // Peace Sign: Pause / Resume
         gestureSystem.on("PEACE_SIGN", () => {
             if (game.state === "PLAYING") {
                 game.pause();
@@ -101,17 +103,21 @@ window.addEventListener("DOMContentLoaded", async () => {
             }
         });
 
-        // Pinch: Mute / Unmute
         gestureSystem.on("PINCH", () => {
             game.toggleMute();
         });
 
-        // Wave: Return to Main Menu
         gestureSystem.on("WAVE", () => {
             window.location.href = "../../index.html";
         });
 
-        // UNLOCK AUDIO ON FIRST USER INTERACTION
+        // Start immediately
+        game.start();
+
+        // Camera / hand tracking starts in background
+        handTracker.setup();
+
+        // Unlock audio on first user action
         const unlockAudio = () => {
             for (const audio of Object.values(sounds)) {
                 if (audio) {
@@ -127,16 +133,11 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         document.addEventListener("click", unlockAudio);
         document.addEventListener("touchstart", unlockAudio);
-
-        game.start();
     } catch (error) {
         console.error("Failed to start game:", error);
     }
 });
 
-/* ==========================================
-   Resize Handler
-========================================== */
 window.addEventListener("resize", () => {
     const canvas = document.getElementById("gameCanvas");
     const game = window.CATCHY?.game;
