@@ -1,11 +1,11 @@
-import { loadImages, loadFont } from "./utils.js";
+import { loadImages, loadAudio, loadFont } from "./utils.js";
 import { HandTracker } from "../../shared/js/handTracking.js";
 import { GestureSystem } from "../../shared/js/gestureSystem.js";
 import { Bird } from "./bird.js";
 import { PipePair } from "./pipe.js";
 import { birdHitPipe } from "./collision.js";
 
-/* ---- settings — exact same as Python settings.py ---- */
+/* ---- settings ---- */
 const GAME_WIDTH = 360;
 const GAME_HEIGHT = 640;
 const PIPE_INTERVAL = 2600;
@@ -19,6 +19,13 @@ const ASSET_SOURCES = {
     pipeBottom: "assets/images/bottom-pipe.png",
 };
 
+/* Sound sources */
+const SOUND_SOURCES = {
+    flap: "assets/sounds/flap.mp3",
+    score: "assets/sounds/score.mp3",
+    hit: "assets/sounds/hit.mp3"
+};
+
 /* ---- state ---- */
 let canvas, ctx, assets;
 let handTracker, gestureSystem;
@@ -28,6 +35,17 @@ let lastTime = 0;
 let pipeTimer = 0;
 let flapReady = true;
 
+/* Audio state */
+let sounds = {};
+let isMuted = false;
+
+/*  Helper to play sounds safely */
+function playSound(name) {
+    if (isMuted || !sounds[name]) return;
+    sounds[name].currentTime = 0;
+    sounds[name].play().catch(() => { });
+}
+
 /* ==========================================
    Boot
 ========================================== */
@@ -35,29 +53,32 @@ window.addEventListener("DOMContentLoaded", async () => {
     canvas = document.getElementById("gameCanvas");
     ctx = canvas.getContext("2d");
 
-    /* wait for Google Font to load */
     await document.fonts.load("12px 'Press Start 2P'");
     await document.fonts.load("10px 'Press Start 2P'");
-    console.log("Font loaded:", document.fonts.check("12px 'Press Start 2P'"));
 
-    /* set canvas internal size */
     canvas.width = GAME_WIDTH;
     canvas.height = GAME_HEIGHT;
-
     resizeCanvas();
 
     assets = await loadImages(ASSET_SOURCES);
+
+    /* Load Sounds */
+    for (const [key, src] of Object.entries(SOUND_SOURCES)) {
+        sounds[key] = await loadAudio(src);
+    }
 
     handTracker = new HandTracker();
     await handTracker.setup();
 
     gestureSystem = new GestureSystem(handTracker);
 
+    /* ---- Gestures ---- */
     gestureSystem.on("OPEN_PALM", () => {
         if (flapReady) {
             if (gameState === "PLAYING") {
                 bird.flap();
-            } else if (gameState === "GAMEOVER") {
+                playSound("flap"); // 👈 Play flap sound
+            } else if (gameState === "GAMEOVER" || gameState === "MENU") {
                 resetGame();
             }
             flapReady = false;
@@ -66,6 +87,12 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     gestureSystem.on("CLOSED_FIST", () => {
         flapReady = true;
+    });
+
+    /* Mute Gesture */
+    gestureSystem.on("PINCH", () => {
+        isMuted = !isMuted;
+        console.log("Audio Muted:", isMuted);
     });
 
     window.addEventListener("keydown", onKey);
@@ -78,11 +105,6 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 /* ==========================================
    Canvas Sizing
-   
-   Internal resolution is ALWAYS 360x640
-   (exactly like Python settings.py)
-   
-   CSS scales it up visually
 ========================================== */
 function resizeCanvas() {
     const stage = document.querySelector(".game-stage");
@@ -124,6 +146,7 @@ function onKey(e) {
         e.preventDefault();
         if (gameState === "PLAYING") {
             bird.flap();
+            playSound("flap");
         } else if (gameState === "GAMEOVER") {
             resetGame();
         }
@@ -133,6 +156,7 @@ function onKey(e) {
 function onTap() {
     if (gameState === "PLAYING") {
         bird.flap();
+        playSound("flap");
     } else if (gameState === "GAMEOVER") {
         resetGame();
     }
@@ -161,35 +185,32 @@ function update(dt) {
     frameCount++;
     pipeTimer += dt * 1000;
 
-    /* spawn pipes */
     if (pipeTimer >= PIPE_INTERVAL) {
         pipeTimer = 0;
         pipes.push(new PipePair(GAME_WIDTH, GAME_HEIGHT, assets));
     }
 
-    /* update bird */
     bird.update(dt);
 
-    /* update pipes + scoring */
     for (const pipe of pipes) {
         pipe.update(dt);
 
         if (!pipe.scored && pipe.x + pipe.width < bird.x) {
             pipe.scored = true;
             score++;
+            playSound("score");
         }
     }
 
-    /* remove off-screen pipes */
     pipes = pipes.filter(p => !p.isOffScreen());
 
-    /* collision — grace period same as Python */
     if (frameCount > GRACE_FRAMES) {
         if (
             bird.isOutOfBounds(GAME_HEIGHT) ||
             pipes.some(p => birdHitPipe(bird, p))
         ) {
             gameState = "GAMEOVER";
+            playSound("hit"); // 👈 Play hit/death sound
         }
     }
 }
@@ -198,12 +219,9 @@ function update(dt) {
    Draw
 ========================================== */
 function draw() {
-    /* keep pixel art sharp */
     ctx.imageSmoothingEnabled = true;
-
     ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    /* background */
     if (assets.background) {
         ctx.drawImage(assets.background, 0, 0, GAME_WIDTH, GAME_HEIGHT);
     } else {
@@ -211,15 +229,11 @@ function draw() {
         ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     }
 
-    /* pipes */
     for (const pipe of pipes) {
         pipe.draw(ctx);
     }
 
-    /* bird */
     bird.draw(ctx);
-
-    /* HUD */
     drawHUD();
 }
 
@@ -228,19 +242,16 @@ function drawHUD() {
     ctx.fillStyle = "#ffffff";
     ctx.textBaseline = "top";
 
-    /* score */
     ctx.font = "12px 'Press Start 2P'";
     ctx.textAlign = "left";
     ctx.fillText("Score: " + score, 10, 10);
 
-    /* get ready */
     if (gameState === "PLAYING" && frameCount < GRACE_FRAMES) {
         ctx.font = "10px 'Press Start 2P'";
         ctx.textAlign = "center";
         ctx.fillText("Get Ready!", GAME_WIDTH / 2, GAME_HEIGHT / 2);
     }
 
-    /* game over */
     if (gameState === "GAMEOVER") {
         ctx.textAlign = "center";
 

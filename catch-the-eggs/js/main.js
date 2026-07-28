@@ -1,6 +1,7 @@
 import { loadImages, loadAudio } from "./utils.js";
 import { Game } from "./game.js";
 import { HandTracker } from "../../shared/js/handTracking.js";
+import { GestureSystem } from "../../shared/js/gestureSystem.js";
 
 const ASSET_SOURCES = {
     background: "assets/images/background.png",

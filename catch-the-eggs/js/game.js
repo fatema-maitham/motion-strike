@@ -41,6 +41,8 @@ export class Game {
         this.score = 0;
         this.lives = 3;
 
+        this.isMuted = false;
+
         // Player
         this.player = new Player(canvas, assets);
 
