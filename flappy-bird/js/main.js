@@ -121,6 +121,11 @@ window.addEventListener("DOMContentLoaded", async () => {
         console.log("Audio muted:", isMuted);
     });
 
+    // Wave: Return to Main Menu
+    gestureSystem.on("WAVE", () => {
+        window.location.href = "../../index.html";
+    });
+
     /* ==========================================
        Keyboard and Click Controls
     ========================================== */

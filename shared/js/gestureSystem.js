@@ -43,6 +43,10 @@ export class GestureSystem {
 
         /* platform gestures */
         switch (current) {
+            case "WAVE":
+                console.log("Gesture: Wave → Return to Menu");
+                this.callbacks["WAVE"]?.();
+                break;
             case "THUMBS_UP":
                 console.log("Gesture: Thumbs Up → Start / Select");
                 this.callbacks["THUMBS_UP"]?.();

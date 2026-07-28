@@ -27,6 +27,10 @@ export class HandTracker {
         this.currentGesture = null;
         this.previousGesture = null;
 
+        /* wave tracking */
+        this.waveHistory = [];
+        this.prevHandX = 0;
+
         /* gesture callbacks — each game sets these */
         this.onGestureChange = null;
     }
@@ -106,6 +110,13 @@ export class HandTracker {
             this.previousGesture = this.currentGesture;
             this.currentGesture = this.detectGesture(this.landmarks);
 
+            /* wave detection override */
+            if (this.currentGesture === "OPEN_PALM") {
+                this._checkWave();
+            } else {
+                this.waveHistory = [];
+            }
+
             /* notify game if gesture changed */
             if (
                 this.currentGesture !== this.previousGesture &&
@@ -127,9 +138,6 @@ export class HandTracker {
     /* ==========================================
        Gesture Detection
     ========================================== */
-    /* ==========================================
-   Gesture Detection (Order Matters!)
-========================================== */
     detectGesture(landmarks) {
         // Check specific gestures FIRST (before open palm)
         if (this.isThumbsUp(landmarks)) return "THUMBS_UP";
@@ -143,6 +151,35 @@ export class HandTracker {
         if (this.isOpenPalm(landmarks)) return "OPEN_PALM";
 
         return "UNKNOWN";
+    }
+    /* ==========================================
+   Wave Detection (Left-Right-Left motion)
+========================================== */
+    _checkWave() {
+        const now = Date.now();
+        const delta = this.handX - this.prevHandX;
+        let dir = 0;
+
+        if (delta > 15) dir = 1;          // Moving right
+        else if (delta < -15) dir = -1;   // Moving left
+
+        if (dir !== 0) {
+            const lastEntry = this.waveHistory[this.waveHistory.length - 1];
+            if (!lastEntry || lastEntry.dir !== dir) {
+                this.waveHistory.push({ time: now, dir: dir });
+            }
+        }
+
+        // Keep only movements from the last 1 second
+        this.waveHistory = this.waveHistory.filter(entry => now - entry.time < 1000);
+
+        // If hand changed direction 3 times quickly, it's a wave!
+        if (this.waveHistory.length >= 3) {
+            this.currentGesture = "WAVE";
+            this.waveHistory = []; // Reset so it doesn't fire 30 times a second
+        }
+
+        this.prevHandX = this.handX;
     }
 
     /* ---- Open Palm ✋ ---- */

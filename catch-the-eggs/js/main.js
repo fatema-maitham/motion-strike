@@ -106,6 +106,11 @@ window.addEventListener("DOMContentLoaded", async () => {
             game.toggleMute();
         });
 
+        // Wave: Return to Main Menu
+        gestureSystem.on("WAVE", () => {
+            window.location.href = "../../index.html";
+        });
+
         // UNLOCK AUDIO ON FIRST USER INTERACTION
         const unlockAudio = () => {
             for (const audio of Object.values(sounds)) {
