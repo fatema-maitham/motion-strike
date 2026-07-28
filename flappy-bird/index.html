@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird</title>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="../shared/css/shared.css">
+    <link rel="stylesheet" href="css/game.css">
+</head>
+
+<body>
+    <main class="game-shell">
+
+        <section class="game-stage">
+            <canvas id="gameCanvas"></canvas>
+        </section>
+
+        <aside class="camera-panel">
+            <p class="camera-label">📷 Your Camera</p>
+            <canvas id="webcamCanvas" width="640" height="480"></canvas>
+            <video id="webcamVideo" autoplay playsinline muted></video>
+        </aside>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+
+</html>
