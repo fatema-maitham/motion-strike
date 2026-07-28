@@ -127,14 +127,21 @@ export class HandTracker {
     /* ==========================================
        Gesture Detection
     ========================================== */
+    /* ==========================================
+   Gesture Detection (Order Matters!)
+========================================== */
     detectGesture(landmarks) {
-        if (this.isOpenPalm(landmarks)) return "OPEN_PALM";
-        if (this.isClosedFist(landmarks)) return "CLOSED_FIST";
+        // Check specific gestures FIRST (before open palm)
         if (this.isThumbsUp(landmarks)) return "THUMBS_UP";
         if (this.isPeaceSign(landmarks)) return "PEACE_SIGN";
         if (this.isOkGesture(landmarks)) return "OK";
         if (this.isPinch(landmarks)) return "PINCH";
         if (this.isOneFingerUp(landmarks)) return "ONE_FINGER";
+
+        // Check general gestures LAST
+        if (this.isClosedFist(landmarks)) return "CLOSED_FIST";
+        if (this.isOpenPalm(landmarks)) return "OPEN_PALM";
+
         return "UNKNOWN";
     }
 
@@ -178,7 +185,10 @@ export class HandTracker {
         const middleUp = landmarks[12].y < landmarks[10].y;
         const ringDown = landmarks[16].y > landmarks[14].y;
         const pinkyDown = landmarks[20].y > landmarks[18].y;
-        return indexUp && middleUp && ringDown && pinkyDown;
+        const thumbDown = landmarks[4].y > landmarks[3].y;
+
+        // Ring, Pinky, and Thumb must be DOWN
+        return indexUp && middleUp && ringDown && pinkyDown && thumbDown;
     }
 
     /* ---- OK Gesture 👌 ---- */

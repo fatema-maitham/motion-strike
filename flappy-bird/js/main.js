@@ -19,7 +19,7 @@ const ASSET_SOURCES = {
     pipeBottom: "assets/images/bottom-pipe.png",
 };
 
-/* Sound sources */
+/* ---- sounds ---- */
 const SOUND_SOURCES = {
     flap: "assets/sounds/flap.mp3",
     score: "assets/sounds/score.mp3",
@@ -35,11 +35,13 @@ let lastTime = 0;
 let pipeTimer = 0;
 let flapReady = true;
 
-/* Audio state */
+/* ---- audio state ---- */
 let sounds = {};
 let isMuted = false;
 
-/*  Helper to play sounds safely */
+/* ==========================================
+   Play Sound Helper
+========================================== */
 function playSound(name) {
     if (isMuted || !sounds[name]) return;
     sounds[name].currentTime = 0;
@@ -53,16 +55,18 @@ window.addEventListener("DOMContentLoaded", async () => {
     canvas = document.getElementById("gameCanvas");
     ctx = canvas.getContext("2d");
 
+    /* wait for Google Font to load */
     await document.fonts.load("12px 'Press Start 2P'");
     await document.fonts.load("10px 'Press Start 2P'");
 
+    /* set canvas internal size */
     canvas.width = GAME_WIDTH;
     canvas.height = GAME_HEIGHT;
     resizeCanvas();
 
     assets = await loadImages(ASSET_SOURCES);
 
-    /* Load Sounds */
+    /* load sounds */
     for (const [key, src] of Object.entries(SOUND_SOURCES)) {
         sounds[key] = await loadAudio(src);
     }
@@ -72,39 +76,87 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     gestureSystem = new GestureSystem(handTracker);
 
-    /* ---- Gestures ---- */
+    /* ==========================================
+       Gesture Controls
+    ========================================== */
+
+    // Open Palm: Flap (Playing) or Start/Restart (Menu/GameOver)
     gestureSystem.on("OPEN_PALM", () => {
         if (flapReady) {
             if (gameState === "PLAYING") {
                 bird.flap();
-                playSound("flap"); // 👈 Play flap sound
-            } else if (gameState === "GAMEOVER" || gameState === "MENU") {
+                playSound("flap");
+            } else if (gameState === "MENU" || gameState === "GAMEOVER") {
                 resetGame();
             }
             flapReady = false;
         }
     });
 
+    // Closed Fist: Reset flap so next open palm triggers again
     gestureSystem.on("CLOSED_FIST", () => {
         flapReady = true;
     });
 
-    /* Mute Gesture */
-    gestureSystem.on("PINCH", () => {
-        isMuted = !isMuted;
-        console.log("Audio Muted:", isMuted);
+    // Thumbs Up: Start / Restart from Menu or Game Over
+    gestureSystem.on("THUMBS_UP", () => {
+        if (gameState === "MENU" || gameState === "GAMEOVER") {
+            resetGame();
+        }
     });
 
+    // Peace Sign: Pause / Resume
+    gestureSystem.on("PEACE_SIGN", () => {
+        if (gameState === "PLAYING") {
+            gameState = "PAUSED";
+        } else if (gameState === "PAUSED") {
+            gameState = "PLAYING";
+            lastTime = performance.now(); // Prevent time jump
+        }
+    });
+
+    // Pinch: Mute / Unmute
+    gestureSystem.on("PINCH", () => {
+        isMuted = !isMuted;
+        console.log("Audio muted:", isMuted);
+    });
+
+    /* ==========================================
+       Keyboard and Click Controls
+    ========================================== */
     window.addEventListener("keydown", onKey);
     canvas.addEventListener("click", onTap);
 
-    resetGame();
+    /* ==========================================
+       Unlock Audio on First Interaction
+    ========================================== */
+    const unlockAudio = () => {
+        for (const audio of Object.values(sounds)) {
+            if (audio) {
+                audio.volume = 0;
+                audio.play().catch(() => { });
+                audio.pause();
+                audio.volume = 0.7;
+            }
+        }
+        document.removeEventListener("click", unlockAudio);
+        document.removeEventListener("touchstart", unlockAudio);
+    };
+
+    document.addEventListener("click", unlockAudio);
+    document.addEventListener("touchstart", unlockAudio);
+
+    /* start on menu */
+    gameState = "MENU";
     lastTime = performance.now();
     requestAnimationFrame(loop);
 });
 
 /* ==========================================
    Canvas Sizing
+
+   Internal resolution is ALWAYS 360x640
+   CSS scales it up visually
 ========================================== */
 function resizeCanvas() {
     const stage = document.querySelector(".game-stage");
@@ -136,28 +188,51 @@ function resetGame() {
     pipeTimer = 0;
     flapReady = true;
     gameState = "PLAYING";
+    lastTime = performance.now(); // Prevent time jump
 }
 
 /* ==========================================
-   Input
+   Keyboard Input
 ========================================== */
 function onKey(e) {
-    if (e.code === "Space" || e.code === "KeyR") {
+    if (e.code === "Space") {
         e.preventDefault();
+
         if (gameState === "PLAYING") {
             bird.flap();
             playSound("flap");
-        } else if (gameState === "GAMEOVER") {
+        } else if (gameState === "MENU" || gameState === "GAMEOVER") {
             resetGame();
         }
     }
+
+    // P key to pause/resume
+    if (e.code === "KeyP") {
+        e.preventDefault();
+
+        if (gameState === "PLAYING") {
+            gameState = "PAUSED";
+        } else if (gameState === "PAUSED") {
+            gameState = "PLAYING";
+            lastTime = performance.now();
+        }
+    }
+
+    // M key to mute/unmute
+    if (e.code === "KeyM") {
+        isMuted = !isMuted;
+        console.log("Audio muted:", isMuted);
+    }
 }
 
+/* ==========================================
+   Click / Tap Input
+========================================== */
 function onTap() {
     if (gameState === "PLAYING") {
         bird.flap();
         playSound("flap");
-    } else if (gameState === "GAMEOVER") {
+    } else if (gameState === "MENU" || gameState === "GAMEOVER") {
         resetGame();
     }
 }
@@ -180,18 +255,22 @@ function loop(now) {
    Update
 ========================================== */
 function update(dt) {
+    // Freeze game if not playing
     if (gameState !== "PLAYING") return;
 
     frameCount++;
     pipeTimer += dt * 1000;
 
+    /* spawn pipes */
     if (pipeTimer >= PIPE_INTERVAL) {
         pipeTimer = 0;
         pipes.push(new PipePair(GAME_WIDTH, GAME_HEIGHT, assets));
     }
 
+    /* update bird */
     bird.update(dt);
 
+    /* update pipes + scoring */
     for (const pipe of pipes) {
         pipe.update(dt);
 
@@ -202,15 +281,17 @@ function update(dt) {
         }
     }
 
+    /* remove off-screen pipes */
     pipes = pipes.filter(p => !p.isOffScreen());
 
+    /* collision — grace period */
     if (frameCount > GRACE_FRAMES) {
         if (
             bird.isOutOfBounds(GAME_HEIGHT) ||
             pipes.some(p => birdHitPipe(bird, p))
         ) {
             gameState = "GAMEOVER";
-            playSound("hit"); // 👈 Play hit/death sound
+            playSound("hit");
         }
     }
 }
@@ -222,6 +303,7 @@ function draw() {
     ctx.imageSmoothingEnabled = true;
     ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
+    /* background */
     if (assets.background) {
         ctx.drawImage(assets.background, 0, 0, GAME_WIDTH, GAME_HEIGHT);
     } else {
@@ -229,38 +311,94 @@ function draw() {
         ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     }
 
-    for (const pipe of pipes) {
-        pipe.draw(ctx);
+    /* only draw game elements if not on menu */
+    if (gameState !== "MENU") {
+        /* pipes */
+        for (const pipe of pipes) {
+            pipe.draw(ctx);
+        }
+
+        /* bird */
+        bird.draw(ctx);
     }
 
-    bird.draw(ctx);
+    /* HUD */
     drawHUD();
+
+    /* Overlays (Menu, Pause, Game Over) */
+    drawOverlay();
 }
 
+/* ==========================================
+   HUD
+========================================== */
 function drawHUD() {
+    // Only show score when playing or paused
+    if (gameState !== "PLAYING" && gameState !== "PAUSED") return;
+
     ctx.save();
     ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.lineWidth = 3;
     ctx.textBaseline = "top";
 
+    /* score */
     ctx.font = "12px 'Press Start 2P'";
     ctx.textAlign = "left";
+    ctx.strokeText("Score: " + score, 10, 10);
     ctx.fillText("Score: " + score, 10, 10);
 
+    /* get ready */
     if (gameState === "PLAYING" && frameCount < GRACE_FRAMES) {
         ctx.font = "10px 'Press Start 2P'";
         ctx.textAlign = "center";
+        ctx.strokeText("Get Ready!", GAME_WIDTH / 2, GAME_HEIGHT / 2);
         ctx.fillText("Get Ready!", GAME_WIDTH / 2, GAME_HEIGHT / 2);
     }
 
-    if (gameState === "GAMEOVER") {
-        ctx.textAlign = "center";
+    ctx.restore();
+}
 
-        ctx.font = "12px 'Press Start 2P'";
-        ctx.fillText("Game Over!", GAME_WIDTH / 2, GAME_HEIGHT / 2 - 30);
-
-        ctx.font = "10px 'Press Start 2P'";
-        ctx.fillText("Score: " + score, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 10);
+/* ==========================================
+   Overlays (Menu, Pause, Game Over)
+========================================== */
+function drawOverlay() {
+    if (gameState === "MENU") {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        drawCenterText("FLAPPY BIRD", 14, -50);
+        drawCenterText("Thumbs Up to Start", 8, 0);
+        drawCenterText("or Press Space", 8, 30);
+    } else if (gameState === "PAUSED") {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        drawCenterText("PAUSED", 14, -20);
+        drawCenterText("Peace Sign to Resume", 8, 20);
+        drawCenterText("or Press P", 8, 50);
+    } else if (gameState === "GAMEOVER") {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        drawCenterText("GAME OVER", 14, -50);
+        drawCenterText("Score: " + score, 12, 0);
+        drawCenterText("Thumbs Up to Restart", 8, 40);
+        drawCenterText("or Press Space", 8, 70);
     }
+}
 
+/* ==========================================
+   Center Text Helper
+========================================== */
+function drawCenterText(text, size, yOffset = 0) {
+    ctx.save();
+    ctx.font = `${size}px 'Press Start 2P'`;
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
+    ctx.lineWidth = 3;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    const y = GAME_HEIGHT / 2 + yOffset;
+    ctx.strokeText(text, GAME_WIDTH / 2, y);
+    ctx.fillText(text, GAME_WIDTH / 2, y);
     ctx.restore();
 }
