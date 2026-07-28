@@ -40,7 +40,6 @@ export class Game {
         // Score and lives
         this.score = 0;
         this.lives = 3;
-
         this.isMuted = false;
 
         // Player
@@ -69,7 +68,7 @@ export class Game {
     start() {
         console.log("Game engine started");
 
-        this.state = GAME_STATES.PLAYING;
+        this.state = GAME_STATES.MENU;
         this.lastTime = performance.now();
 
         // Unlock audio by playing a silent sound on first interaction
@@ -83,6 +82,39 @@ export class Game {
 
         requestAnimationFrame(this.loop);
     }
+
+    // ==========================================
+    // Game Controls (Restart, Pause, Resume, Mute)
+    // ==========================================
+
+    restart() {
+        this.score = 0;
+        this.lives = 3;
+        this.player = new Player(this.canvas, this.assets);
+        this.spawnSystem.reset();
+        this.levelSystem.reset();
+        this.state = GAME_STATES.PLAYING;
+        this.lastTime = performance.now(); // Prevent time jump
+    }
+
+    pause() {
+        if (this.state === GAME_STATES.PLAYING) {
+            this.state = GAME_STATES.PAUSED;
+        }
+    }
+
+    resume() {
+        if (this.state === GAME_STATES.PAUSED) {
+            this.state = GAME_STATES.PLAYING;
+            this.lastTime = performance.now(); // Prevent time jump
+        }
+    }
+
+    toggleMute() {
+        this.isMuted = !this.isMuted;
+        console.log("Audio muted:", this.isMuted);
+    }
+
     // ==========================================
     // Resize (for responsive canvas)
     // ==========================================
@@ -121,6 +153,7 @@ export class Game {
     // ==========================================
 
     update(dt) {
+        // Freeze game if not playing
         if (this.state !== GAME_STATES.PLAYING) {
             return;
         }
@@ -176,11 +209,13 @@ export class Game {
 
                 this.applyReaction(result.reaction);
 
-                // Play sound
-                if (object.type === "EGG" || object.type === "GOLDEN_EGG") {
-                    this.audio.play("catchEgg");
-                } else if (object.type === "BOMB") {
-                    this.audio.play("bomb");
+                // Play sound (if not muted)
+                if (!this.isMuted) {
+                    if (object.type === "EGG" || object.type === "GOLDEN_EGG") {
+                        this.audio.play("catchEgg");
+                    } else if (object.type === "BOMB") {
+                        this.audio.play("bomb");
+                    }
                 }
 
                 // Spawn effect for golden egg
@@ -253,6 +288,9 @@ export class Game {
 
         // Draw HUD
         this.drawHUD();
+
+        // Draw Overlays (Menu, Pause, Game Over)
+        this.drawOverlay();
     }
 
     // ==========================================
@@ -329,5 +367,44 @@ export class Game {
         }
 
         this.ctx.drawImage(background, offsetX, offsetY, drawWidth, drawHeight);
+    }
+
+    // ==========================================
+    // Overlays (Menu, Pause, Game Over)
+    // ==========================================
+
+    drawOverlay() {
+        if (this.state === GAME_STATES.MENU) {
+            this.ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+            this.ctx.fillRect(0, 0, this.width, this.height);
+            this.drawCenterText("CATCH THE EGGS", 48, -40);
+            this.drawCenterText("Thumbs Up to Start", 24, 40);
+        } else if (this.state === GAME_STATES.PAUSED) {
+            this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            this.ctx.fillRect(0, 0, this.width, this.height);
+            this.drawCenterText("PAUSED", 48, -20);
+            this.drawCenterText("Peace Sign to Resume", 24, 40);
+        } else if (this.state === GAME_STATES.GAME_OVER) {
+            this.ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+            this.ctx.fillRect(0, 0, this.width, this.height);
+            this.drawCenterText("GAME OVER", 48, -60);
+            this.drawCenterText(`Score: ${this.score}`, 32, 10);
+            this.drawCenterText("Thumbs Up to Restart", 24, 70);
+        }
+    }
+
+    drawCenterText(text, size, yOffset = 0) {
+        this.ctx.save();
+        this.ctx.font = `${size}px "Pink Lemonade", sans-serif`;
+        this.ctx.fillStyle = "#ffffff";
+        this.ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
+        this.ctx.lineWidth = 4;
+        this.ctx.textAlign = "center";
+        this.ctx.textBaseline = "middle";
+
+        const y = this.height / 2 + yOffset;
+        this.ctx.strokeText(text, this.width / 2, y);
+        this.ctx.fillText(text, this.width / 2, y);
+        this.ctx.restore();
     }
 }

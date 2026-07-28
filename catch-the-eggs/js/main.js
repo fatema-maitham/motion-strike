@@ -22,10 +22,10 @@ const SOUND_SOURCES = {
 
 function resizeCanvas(canvas) {
     const stage = document.querySelector(".game-stage");
-    const maxW = stage.clientWidth - 50;
-    const maxH = stage.clientHeight - 50;
+    const maxW = stage.clientWidth - 150;
+    const maxH = stage.clientHeight - 150;
 
-    // Aspect ratio (make it wider for catching eggs)
+    // Aspect ratio (16/10 for a nice widescreen feel)
     const ratio = 16 / 10;
 
     let dw = maxW;
@@ -54,6 +54,9 @@ window.CATCHY = {
     handTracker: null,
 };
 
+/* ==========================================
+   Boot
+========================================== */
 window.addEventListener("DOMContentLoaded", async () => {
     try {
         const canvas = document.getElementById("gameCanvas");
@@ -79,6 +82,30 @@ window.addEventListener("DOMContentLoaded", async () => {
         window.CATCHY.handTracker = handTracker;
         await handTracker.setup();
 
+        // Initialize Shared Gesture System
+        const gestureSystem = new GestureSystem(handTracker);
+
+        // Thumbs Up: Start / Restart
+        gestureSystem.on("THUMBS_UP", () => {
+            if (game.state === "MENU" || game.state === "GAME_OVER") {
+                game.restart();
+            }
+        });
+
+        // Peace Sign: Pause / Resume
+        gestureSystem.on("PEACE_SIGN", () => {
+            if (game.state === "PLAYING") {
+                game.pause();
+            } else if (game.state === "PAUSED") {
+                game.resume();
+            }
+        });
+
+        // Pinch: Mute / Unmute
+        gestureSystem.on("PINCH", () => {
+            game.toggleMute();
+        });
+
         // UNLOCK AUDIO ON FIRST USER INTERACTION
         const unlockAudio = () => {
             for (const audio of Object.values(sounds)) {
@@ -102,9 +129,13 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
+/* ==========================================
+   Resize Handler
+========================================== */
 window.addEventListener("resize", () => {
     const canvas = document.getElementById("gameCanvas");
     const game = window.CATCHY?.game;
+
     if (!canvas || !game) return;
 
     resizeCanvas(canvas);
