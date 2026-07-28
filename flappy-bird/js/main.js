@@ -82,20 +82,12 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     // Open Palm: Flap (Playing) or Start/Restart (Menu/GameOver)
     gestureSystem.on("OPEN_PALM", () => {
-        if (flapReady) {
-            if (gameState === "PLAYING") {
-                bird.flap();
-                playSound("flap");
-            } else if (gameState === "MENU" || gameState === "GAMEOVER") {
-                resetGame();
-            }
-            flapReady = false;
+        if (gameState === "PLAYING") {
+            bird.flap();
+            playSound("flap");
+        } else if (gameState === "MENU" || gameState === "GAMEOVER") {
+            resetGame();
         }
-    });
-
-    // Closed Fist: Reset flap so next open palm triggers again
-    gestureSystem.on("CLOSED_FIST", () => {
-        flapReady = true;
     });
 
     // Thumbs Up: Start / Restart from Menu or Game Over

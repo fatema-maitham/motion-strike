@@ -1,9 +1,6 @@
 /* ==========================================
    Shared Hand Tracking
    Used by all games
-   
-   Each game passes its own onGesture callback
-   to handle gestures differently
 ========================================== */
 
 export class HandTracker {
@@ -31,7 +28,7 @@ export class HandTracker {
         this.waveHistory = [];
         this.prevHandX = 0;
 
-        /* gesture callbacks — each game sets these */
+        /* gesture callbacks */
         this.onGestureChange = null;
     }
 
@@ -81,7 +78,6 @@ export class HandTracker {
        Results
     ========================================== */
     onResults(results) {
-        /* draw mirrored video */
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         if (results.image) {
@@ -102,22 +98,19 @@ export class HandTracker {
             this.detected = true;
             this.landmarks = results.multiHandLandmarks[0];
 
-            /* hand position — index finger base (point 9) */
             this.handX = (1 - this.landmarks[9].x) * this.canvas.width;
             this.handY = this.landmarks[9].y * this.canvas.height;
 
-            /* detect gesture */
             this.previousGesture = this.currentGesture;
             this.currentGesture = this.detectGesture(this.landmarks);
 
-            /* wave detection override */
+            // Wave override
             if (this.currentGesture === "OPEN_PALM") {
                 this._checkWave();
             } else {
                 this.waveHistory = [];
             }
 
-            /* notify game if gesture changed */
             if (
                 this.currentGesture !== this.previousGesture &&
                 this.onGestureChange
@@ -132,57 +125,24 @@ export class HandTracker {
             this.landmarks = null;
             this.currentGesture = null;
             this.previousGesture = null;
+            this.waveHistory = [];
         }
     }
 
     /* ==========================================
-       Gesture Detection
+       Gesture Detection (Order Matters!)
     ========================================== */
     detectGesture(landmarks) {
-        // Check specific gestures FIRST (before open palm)
         if (this.isThumbsUp(landmarks)) return "THUMBS_UP";
         if (this.isPeaceSign(landmarks)) return "PEACE_SIGN";
         if (this.isOkGesture(landmarks)) return "OK";
         if (this.isPinch(landmarks)) return "PINCH";
         if (this.isOneFingerUp(landmarks)) return "ONE_FINGER";
-
-        // Check general gestures LAST
         if (this.isClosedFist(landmarks)) return "CLOSED_FIST";
         if (this.isOpenPalm(landmarks)) return "OPEN_PALM";
-
         return "UNKNOWN";
     }
-    /* ==========================================
-   Wave Detection (Left-Right-Left motion)
-========================================== */
-    _checkWave() {
-        const now = Date.now();
-        const delta = this.handX - this.prevHandX;
-        let dir = 0;
 
-        if (delta > 15) dir = 1;          // Moving right
-        else if (delta < -15) dir = -1;   // Moving left
-
-        if (dir !== 0) {
-            const lastEntry = this.waveHistory[this.waveHistory.length - 1];
-            if (!lastEntry || lastEntry.dir !== dir) {
-                this.waveHistory.push({ time: now, dir: dir });
-            }
-        }
-
-        // Keep only movements from the last 1 second
-        this.waveHistory = this.waveHistory.filter(entry => now - entry.time < 1000);
-
-        // If hand changed direction 3 times quickly, it's a wave!
-        if (this.waveHistory.length >= 3) {
-            this.currentGesture = "WAVE";
-            this.waveHistory = []; // Reset so it doesn't fire 30 times a second
-        }
-
-        this.prevHandX = this.handX;
-    }
-
-    /* ---- Open Palm ✋ ---- */
     isOpenPalm(landmarks) {
         const tips = [8, 12, 16, 20];
         const pips = [6, 10, 14, 18];
@@ -193,7 +153,6 @@ export class HandTracker {
         return extended >= 3;
     }
 
-    /* ---- Closed Fist ✊ ---- */
     isClosedFist(landmarks) {
         const tips = [8, 12, 16, 20];
         const pips = [6, 10, 14, 18];
@@ -204,7 +163,6 @@ export class HandTracker {
         return folded >= 3;
     }
 
-    /* ---- Thumbs Up 👍 ---- */
     isThumbsUp(landmarks) {
         const thumbUp = landmarks[4].y < landmarks[3].y;
         const tips = [8, 12, 16, 20];
@@ -216,50 +174,66 @@ export class HandTracker {
         return thumbUp && fingersFolded >= 3;
     }
 
-    /* ---- Peace Sign ✌️ ---- */
     isPeaceSign(landmarks) {
         const indexUp = landmarks[8].y < landmarks[6].y;
         const middleUp = landmarks[12].y < landmarks[10].y;
         const ringDown = landmarks[16].y > landmarks[14].y;
         const pinkyDown = landmarks[20].y > landmarks[18].y;
         const thumbDown = landmarks[4].y > landmarks[3].y;
-
-        // Ring, Pinky, and Thumb must be DOWN
         return indexUp && middleUp && ringDown && pinkyDown && thumbDown;
     }
 
-    /* ---- OK Gesture 👌 ---- */
     isOkGesture(landmarks) {
         const thumbTip = landmarks[4];
         const indexTip = landmarks[8];
-        const dist = Math.hypot(
-            thumbTip.x - indexTip.x,
-            thumbTip.y - indexTip.y
-        );
+        const dist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
         const middleUp = landmarks[12].y < landmarks[10].y;
         const ringUp = landmarks[16].y < landmarks[14].y;
         return dist < 0.05 && middleUp && ringUp;
     }
 
-    /* ---- Pinch 🤏 ---- */
     isPinch(landmarks) {
         const thumbTip = landmarks[4];
         const indexTip = landmarks[8];
-        const dist = Math.hypot(
-            thumbTip.x - indexTip.x,
-            thumbTip.y - indexTip.y
-        );
+        const dist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
         const middleDown = landmarks[12].y > landmarks[10].y;
         return dist < 0.05 && middleDown;
     }
 
-    /* ---- One Finger ☝️ ---- */
     isOneFingerUp(landmarks) {
         const indexUp = landmarks[8].y < landmarks[6].y;
         const middleDown = landmarks[12].y > landmarks[10].y;
         const ringDown = landmarks[16].y > landmarks[14].y;
         const pinkyDown = landmarks[20].y > landmarks[18].y;
         return indexUp && middleDown && ringDown && pinkyDown;
+    }
+
+    /* ==========================================
+       Wave Detection (Strict)
+    ========================================== */
+    _checkWave() {
+        const now = Date.now();
+        const delta = this.handX - this.prevHandX;
+        let dir = 0;
+
+        if (delta > 40) dir = 1;
+        else if (delta < -40) dir = -1;
+
+        if (dir !== 0) {
+            const lastEntry = this.waveHistory[this.waveHistory.length - 1];
+            if (!lastEntry || lastEntry.dir !== dir) {
+                this.waveHistory.push({ time: now, dir: dir });
+            }
+        }
+
+        this.waveHistory = this.waveHistory.filter(entry => now - entry.time < 1500);
+
+        if (this.waveHistory.length >= 4) {
+            this.currentGesture = "WAVE";
+            this.waveHistory = [];
+        }
+
+        this.prevHandX = this.handX;
     }
 
     /* ==========================================
