@@ -7,3 +7,36 @@
 body {
     font-family: "Pink Lemonade", sans-serif;
 }
+
+.hud-top-left-cte {
+    position: fixed !important;
+    top: 20px !important;
+    right: 40px !important;
+    left: auto !important;
+    z-index: 9999 !important;
+    color: #000000 !important;
+    font-family: "Pink Lemonade", sans-serif !important;
+    font-size: 30px !important;
+    pointer-events: none !important;
+}
+
+.cte-score {
+    padding: 12px 24px !important;
+    border-radius: 16px !important;
+    border: none !important;
+    outline: none !important;
+    margin-bottom: 12px !important;
+    display: inline-block !important;
+    box-shadow: none !important;
+}
+
+.cte-hearts {
+    display: flex !important;
+    gap: 10px !important;
+}
+
+.cte-hearts img {
+    width: 45px !important;
+    height: 45px !important;
+    filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5)) !important;
+}

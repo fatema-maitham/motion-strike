@@ -47,6 +47,8 @@ export class Game {
 
         this.loop = this.loop.bind(this);
         this.bgmVolume = 0.05;
+        this.hudScoreEl = null;
+        this.hudHeartsEl = null;
     }
 
     start() {
@@ -54,6 +56,8 @@ export class Game {
         this.state = GAME_STATES.MENU;
         this.lastTime = performance.now();
         requestAnimationFrame(this.loop);
+        this.hudScoreEl = document.getElementById("cteScore");
+        this.hudHeartsEl = document.getElementById("cteHearts");
     }
 
     restart() {
@@ -88,6 +92,7 @@ export class Game {
             this.lastTime = performance.now();
 
             if (this.sounds.bgm) {
+                this.sounds.bgm.volume = 0.05;
                 this.sounds.bgm.play().catch(e => console.log("BGM play blocked"));
             }
         }
@@ -157,6 +162,8 @@ export class Game {
 
             console.log("Game over");
         }
+
+        this.updateHUD();
     }
 
     handleObjectInteractions() {
@@ -221,6 +228,18 @@ export class Game {
         }
     }
 
+    updateHUD() {
+        if (this.hudScoreEl) {
+            this.hudScoreEl.textContent = this.score;
+        }
+        if (this.hudHeartsEl) {
+            const hearts = this.hudHeartsEl.querySelectorAll("img");
+            hearts.forEach((img, i) => {
+                img.style.opacity = i < this.lives ? "1" : "0.2";
+            });
+        }
+    }
+
     draw() {
         this.ctx.clearRect(0, 0, this.width, this.height);
 
@@ -233,7 +252,7 @@ export class Game {
 
         this.effectManager.draw(this.ctx);
 
-        this.drawHUD();
+        this.updateHUD();
 
         this.drawOverlay();
     }

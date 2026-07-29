@@ -61,6 +61,13 @@ function playSound(name) {
     sounds[name].play().catch(() => { });
 }
 
+function updateHUD() {
+    const scoreEl = document.getElementById("fbScore");
+    if (scoreEl) {
+        scoreEl.textContent = score;
+    }
+}
+
 window.addEventListener("DOMContentLoaded", () => {
     canvas = document.getElementById("gameCanvas");
     ctx = canvas.getContext("2d");
@@ -184,6 +191,8 @@ function resetGame() {
         sounds.bgm.volume = 0.2;
         sounds.bgm.play().catch(() => { });
     }
+
+    updateHUD();
 }
 
 function onKey(e) {
@@ -257,6 +266,7 @@ function update(dt) {
             pipe.scored = true;
             score++;
             playSound("score");
+            updateHUD();
         }
     }
 
@@ -272,6 +282,8 @@ function update(dt) {
                 sounds.bgm.pause();
                 sounds.bgm.currentTime = 0;
             }
+
+            updateHUD();
         }
     }
 }
@@ -294,48 +306,7 @@ function draw() {
         bird.draw(ctx);
     }
 
-    drawHUD();
     drawOverlay();
-}
-
-function drawHUD() {
-    if (gameState !== "PLAYING" && gameState !== "PAUSED") return;
-
-    ctx.save();
-    ctx.fillStyle = "#ffffff";
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
-    ctx.lineWidth = 3;
-    ctx.textBaseline = "top";
-
-    ctx.font = "12px 'Press Start 2P'";
-    ctx.textAlign = "left";
-    ctx.strokeText("Score: " + score, 10, 10);
-    ctx.fillText("Score: " + score, 10, 10);
-
-    if (gameState === "PLAYING" && frameCount < GRACE_FRAMES) {
-        ctx.font = "10px 'Press Start 2P'";
-        ctx.textAlign = "center";
-        ctx.strokeText("Get Ready!", GAME_WIDTH / 2, GAME_HEIGHT / 2);
-        ctx.fillText("Get Ready!", GAME_WIDTH / 2, GAME_HEIGHT / 2);
-    }
-
-    ctx.restore();
-
-    if (handTracker) {
-        const gesture = handTracker.getCurrentGesture();
-        if (gesture) {
-            ctx.save();
-            ctx.font = "10px Arial";
-            ctx.fillStyle = "yellow";
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 2;
-            ctx.textAlign = "left";
-            ctx.textBaseline = "top";
-            ctx.strokeText("Gesture: " + gesture, 10, 30);
-            ctx.fillText("Gesture: " + gesture, 10, 30);
-            ctx.restore();
-        }
-    }
 }
 
 function drawOverlay() {
@@ -356,14 +327,14 @@ function drawOverlay() {
         ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
         drawCenterText("GAME OVER", 14, -50);
         drawCenterText("Score: " + score, 12, 0);
-        drawCenterText("Thumbs Up to Restart", 8, 50);
-        drawCenterText("or Press Space", 8, 80);
+        drawCenterText("Thumbs Up to Restart", 8, 40);
+        drawCenterText("or Press Space", 8, 70);
     }
 }
 
 function drawCenterText(text, size, yOffset = 0) {
     ctx.save();
-    ctx.font = size + "px 'Press Start 2P'";
+    ctx.font = `${size}px 'Press Start 2P'`;
     ctx.fillStyle = "#ffffff";
     ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
     ctx.lineWidth = 3;
