@@ -1,3 +1,12 @@
+body {
+    background-color: #f9f8f7;
+}
+
+.game-stage {
+    flex-direction: column;
+    gap: 30px;
+}
+
 .hub-container {
     display: flex;
     gap: 60px;
@@ -31,6 +40,93 @@
     transform: scale(1.05);
 }
 
-body {
-    background-color: #f9f8f7;
+.game-card.selected {
+    border-color: #f39c12;
+    transform: scale(1.1);
+}
+
+.card-badge {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.72);
+    color: #ffffff;
+    font-family: monospace;
+    font-size: 13px;
+    padding: 6px 16px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    pointer-events: none;
+}
+
+.hub-hint {
+    font-family: monospace;
+    font-size: 14px;
+    color: #999999;
+    letter-spacing: 1px;
+}
+
+.corner-btn-left {
+    position: fixed;
+    top: 24px;
+    left: 34px;
+    z-index: 500;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.corner-btn-left img {
+    width: 110px;
+    height: auto;
+    object-fit: contain;
+}
+
+.corner-btn-left:hover {
+    transform: scale(1.08);
+}
+
+@media (max-width: 1024px) {
+    .hub-container {
+        gap: 30px;
+    }
+
+    .game-card {
+        width: 240px;
+        height: 240px;
+    }
+
+    .corner-btn-left img {
+        width: 85px;
+    }
+}
+
+@media (max-width: 768px) {
+    .hub-container {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .game-card {
+        width: 190px;
+        height: 190px;
+        border-width: 4px;
+    }
+
+    .card-badge {
+        font-size: 11px;
+        padding: 4px 12px;
+    }
+
+    .corner-btn-left {
+        top: 12px;
+        left: 16px;
+    }
+
+    .corner-btn-left img {
+        width: 68px;
+    }
 }

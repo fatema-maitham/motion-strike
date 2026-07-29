@@ -117,7 +117,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     gestureSystem.on("WAVE", () => {
         if (gameState === "PAUSED" || gameState === "MENU" || gameState === "GAMEOVER") {
-            window.location.href = "../../index.html";
+            window.location.href = "../games.html";
         }
     });
 

@@ -113,7 +113,7 @@ window.addEventListener("DOMContentLoaded", () => {
         gestureSystem.on("WAVE", () => {
             // Only allow exit if game is paused or in menu/gameover
             if (game.state === "PAUSED" || game.state === "MENU" || game.state === "GAME_OVER") {
-                window.location.href = "../../index.html";
+                window.location.href = "../games.html";
             }
         });
 

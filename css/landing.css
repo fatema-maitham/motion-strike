@@ -1,0 +1,279 @@
+.landing-shell {
+    display: flex;
+    flex-direction: row;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #f9f8f7;
+}
+
+.landing-stage {
+    width: 70%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    padding: 40px;
+}
+
+.landing-logo {
+    width: 70%;
+    max-width: 620px;
+    height: auto;
+    object-fit: contain;
+    animation: logoFloat 3s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-12px);
+    }
+}
+
+.play-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.play-btn img {
+    width: 240px;
+    height: auto;
+    object-fit: contain;
+}
+
+.play-btn:hover {
+    transform: scale(1.08);
+}
+
+.play-btn.selected {
+    transform: scale(1.15);
+}
+
+.landing-hint {
+    font-family: monospace;
+    font-size: 14px;
+    color: #999999;
+    letter-spacing: 1px;
+}
+
+.corner-btn {
+    position: fixed;
+    top: 24px;
+    right: 34px;
+    z-index: 500;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.corner-btn img {
+    width: 150px;
+    height: auto;
+    object-fit: contain;
+}
+
+.corner-btn:hover {
+    transform: scale(1.08);
+}
+
+.panel-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+}
+
+.panel-overlay.hidden {
+    display: none;
+}
+
+.panel-box {
+    position: relative;
+    width: 100%;
+    max-width: 620px;
+    max-height: 86vh;
+    overflow-y: auto;
+    background: #ffffff;
+    border-radius: 26px;
+    padding: 40px 44px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.panel-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.panel-close img {
+    width: 70px;
+    height: auto;
+    object-fit: contain;
+}
+
+.panel-close:hover {
+    transform: scale(1.1);
+}
+
+.panel-title {
+    font-family: "Pink Lemonade", sans-serif;
+    font-size: 42px;
+    color: #2c2c2c;
+    text-align: center;
+    margin-bottom: 26px;
+}
+
+.panel-section {
+    margin-bottom: 26px;
+}
+
+.panel-subtitle {
+    font-family: "Pink Lemonade", sans-serif;
+    font-size: 24px;
+    color: #f39c12;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+}
+
+.gesture-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 6px;
+    border-radius: 10px;
+    transition: background 0.2s ease;
+}
+
+.gesture-row:hover {
+    background: rgba(243, 156, 18, 0.08);
+}
+
+.gesture-icon {
+    font-size: 26px;
+    width: 40px;
+    text-align: center;
+}
+
+.gesture-name {
+    flex: 1;
+    font-family: sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #333333;
+}
+
+.gesture-action {
+    font-family: sans-serif;
+    font-size: 14px;
+    color: #888888;
+    text-align: right;
+}
+
+.panel-footer {
+    text-align: center;
+    font-family: monospace;
+    font-size: 13px;
+    color: #aaaaaa;
+    margin-top: 10px;
+}
+
+@media (max-width: 1024px) {
+    .landing-shell {
+        flex-direction: column;
+    }
+
+    .landing-stage {
+        width: 100%;
+        height: 65%;
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .landing-logo {
+        width: 80%;
+    }
+
+    .play-btn img {
+        width: 180px;
+    }
+
+    .corner-btn img {
+        width: 110px;
+    }
+}
+
+@media (max-width: 768px) {
+    .landing-stage {
+        height: 60%;
+    }
+
+    .landing-logo {
+        width: 85%;
+    }
+
+    .play-btn img {
+        width: 150px;
+    }
+
+    .corner-btn {
+        top: 14px;
+        right: 16px;
+    }
+
+    .corner-btn img {
+        width: 85px;
+    }
+
+    .panel-box {
+        padding: 28px 22px;
+        border-radius: 18px;
+    }
+
+    .panel-title {
+        font-size: 30px;
+    }
+
+    .panel-subtitle {
+        font-size: 19px;
+    }
+
+    .gesture-icon {
+        font-size: 21px;
+        width: 32px;
+    }
+
+    .gesture-name {
+        font-size: 13px;
+    }
+
+    .gesture-action {
+        font-size: 12px;
+    }
+
+    .panel-close img {
+        width: 52px;
+    }
+}

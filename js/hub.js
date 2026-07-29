@@ -4,36 +4,55 @@ import { GestureSystem } from "../shared/js/gestureSystem.js";
 let handTracker, gestureSystem;
 
 window.addEventListener("DOMContentLoaded", () => {
-    const cards = document.querySelectorAll('.game-card');
+    const cards = document.querySelectorAll(".game-card");
+    const backBtn = document.getElementById("backBtn");
 
     handTracker = new HandTracker();
     gestureSystem = new GestureSystem(handTracker);
 
-    // 1 Finger: Launch Game 1 (Catch the Eggs)
+    function startGame(index) {
+        const card = cards[index];
+        if (!card) return;
+
+        card.classList.add("selected");
+
+        const gameUrl = card.getAttribute("data-game");
+        console.log("Launching game:", gameUrl);
+
+        setTimeout(() => {
+            window.location.href = gameUrl;
+        }, 250);
+    }
+
+    function goBack() {
+        window.location.href = "index.html";
+    }
+
     gestureSystem.on("ONE_FINGER", () => {
         startGame(0);
     });
 
-    // 2 Fingers (Peace Sign): Launch Game 2 (Flappy Bird)
     gestureSystem.on("PEACE_SIGN", () => {
         startGame(1);
     });
 
-    // Mouse click fallback
+    gestureSystem.on("WAVE", () => {
+        goBack();
+    });
+
     cards.forEach((card, index) => {
-        card.addEventListener('click', () => {
+        card.addEventListener("click", () => {
             startGame(index);
         });
     });
 
-    // Start camera AFTER everything is set up
-    handTracker.setup().then(() => {
-        console.log("Hub: Hand tracking ready");
+    backBtn.addEventListener("click", goBack);
+
+    window.addEventListener("keydown", (e) => {
+        if (e.code === "Escape") goBack();
+        if (e.code === "Digit1") startGame(0);
+        if (e.code === "Digit2") startGame(1);
     });
 
-    function startGame(index) {
-        const gameUrl = cards[index].getAttribute('data-game');
-        console.log("Launching game:", gameUrl);
-        window.location.href = gameUrl;
-    }
+    handTracker.setup();
 });
