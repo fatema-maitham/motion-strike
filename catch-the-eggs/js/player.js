@@ -8,7 +8,7 @@ const MOVE_SPEED = 500;
 const FARMER_BASE_HEIGHT = 230;
 const EXPRESSION_DURATION = 1.0;
 const FARMER_BOTTOM_OFFSET = -2;
-const DEBUG_CATCH_ZONE = true;
+const DEBUG_CATCH_ZONE = false;
 const HAND_LERP_SPEED = 0.15;
 
 export class Player {
