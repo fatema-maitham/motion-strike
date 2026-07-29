@@ -125,7 +125,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
         // Unlock audio on first user action
         const unlockAudio = () => {
-            // Unlock all audio contexts by playing/pausing each sound
             for (const audio of Object.values(sounds)) {
                 if (audio) {
                     audio.volume = 0;
@@ -135,13 +134,11 @@ window.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-            // Start BGM with low volume
             if (sounds.bgm) {
-                sounds.bgm.volume = 0.5;
+                sounds.bgm.volume = 0.05;
                 sounds.bgm.play().catch(() => { });
             }
 
-            // Set volume for SFX
             if (sounds.catchEgg) sounds.catchEgg.volume = 1.0;
             if (sounds.bomb) sounds.bomb.volume = 1.0;
 
