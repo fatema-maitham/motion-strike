@@ -46,6 +46,7 @@ export class Game {
         this.levelSystem = new LevelSystem();
 
         this.loop = this.loop.bind(this);
+        this.bgmVolume = 0.05;
     }
 
     start() {
@@ -65,6 +66,7 @@ export class Game {
         this.lastTime = performance.now();
 
         if (this.sounds.bgm) {
+            this.sounds.bgm.volume = 0.05;
             this.sounds.bgm.currentTime = 0;
             this.sounds.bgm.play().catch(e => console.log("BGM play blocked"));
         }
