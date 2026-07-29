@@ -287,6 +287,23 @@ function drawHUD() {
     }
 
     ctx.restore();
+
+    // Debug gesture
+    if (handTracker) {
+        const gesture = handTracker.getCurrentGesture();
+        if (gesture) {
+            ctx.save();
+            ctx.font = "10px Arial";
+            ctx.fillStyle = "yellow";
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 2;
+            ctx.textAlign = "left";
+            ctx.textBaseline = "top";
+            ctx.strokeText("Gesture: " + gesture, 10, 30);
+            ctx.fillText("Gesture: " + gesture, 10, 30);
+            ctx.restore();
+        }
+    }
 }
 
 function drawOverlay() {

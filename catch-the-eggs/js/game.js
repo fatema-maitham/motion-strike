@@ -324,6 +324,22 @@ export class Game {
             }
             this.ctx.restore();
         }
+
+        // Debug gesture text
+        const handTracker = window.CATCHY?.handTracker;
+        if (handTracker) {
+            const gesture = handTracker.getCurrentGesture();
+            if (gesture) {
+                this.ctx.font = "16px Arial";
+                this.ctx.fillStyle = "yellow";
+                this.ctx.strokeStyle = "black";
+                this.ctx.lineWidth = 3;
+                this.ctx.textAlign = "left";
+                this.ctx.textBaseline = "top";
+                this.ctx.strokeText("Gesture: " + gesture, 10, 40);
+                this.ctx.fillText("Gesture: " + gesture, 10, 40);
+            }
+        }
     }
 
     // ==========================================
