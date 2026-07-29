@@ -1,7 +1,3 @@
-/* ==========================================
-   Game Engine (Core)
-========================================== */
-
 import { Player } from "./player.js";
 import { SpawnSystem } from "./egg.js";
 import { LevelSystem } from "./levels.js";
@@ -25,45 +21,32 @@ export class Game {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
         this.assets = assets;
+        this.sounds = sounds;
 
-        // Logical resolution
         this.width = canvas.width;
         this.height = canvas.height;
 
-        // Game state
         this.state = GAME_STATES.MENU;
 
-        // Time tracking
         this.lastTime = 0;
         this.deltaTime = 0;
 
-        // Score and lives
         this.score = 0;
         this.lives = 3;
         this.isMuted = false;
 
-        // Player
         this.player = new Player(canvas, assets);
 
-        // Effects
         this.effectManager = new EffectManager(assets);
 
-        // Audio
         this.audio = new AudioManager(sounds);
 
-        // Falling objects
         this.spawnSystem = new SpawnSystem(this.width, this.height, assets, this.effectManager);
 
-        // Level progression
         this.levelSystem = new LevelSystem();
 
-        // Bind game loop
         this.loop = this.loop.bind(this);
     }
-
-    // ==========================================
-    // Start
-    // ==========================================
 
     start() {
         console.log("Game engine started");
@@ -72,10 +55,6 @@ export class Game {
         requestAnimationFrame(this.loop);
     }
 
-    // ==========================================
-    // Game Controls (Restart, Pause, Resume, Mute)
-    // ==========================================
-
     restart() {
         this.score = 0;
         this.lives = 3;
@@ -83,19 +62,32 @@ export class Game {
         this.spawnSystem.reset();
         this.levelSystem.reset();
         this.state = GAME_STATES.PLAYING;
-        this.lastTime = performance.now(); // Prevent time jump
+        this.lastTime = performance.now();
+
+        if (this.sounds.bgm) {
+            this.sounds.bgm.currentTime = 0;
+            this.sounds.bgm.play().catch(e => console.log("BGM play blocked"));
+        }
     }
 
     pause() {
         if (this.state === GAME_STATES.PLAYING) {
             this.state = GAME_STATES.PAUSED;
+
+            if (this.sounds.bgm) {
+                this.sounds.bgm.pause();
+            }
         }
     }
 
     resume() {
         if (this.state === GAME_STATES.PAUSED) {
             this.state = GAME_STATES.PLAYING;
-            this.lastTime = performance.now(); // Prevent time jump
+            this.lastTime = performance.now();
+
+            if (this.sounds.bgm) {
+                this.sounds.bgm.play().catch(e => console.log("BGM play blocked"));
+            }
         }
     }
 
@@ -103,10 +95,6 @@ export class Game {
         this.isMuted = !this.isMuted;
         console.log("Audio muted:", this.isMuted);
     }
-
-    // ==========================================
-    // Resize (for responsive canvas)
-    // ==========================================
 
     resize(width, height) {
         this.width = width;
@@ -119,14 +107,9 @@ export class Game {
         this.spawnSystem.resize(width, height);
     }
 
-    // ==========================================
-    // Game Loop
-    // ==========================================
-
     loop(currentTime) {
         this.deltaTime = (currentTime - this.lastTime) / 1000;
 
-        // Prevent very large time jumps
         this.deltaTime = Math.min(this.deltaTime, 0.05);
 
         this.lastTime = currentTime;
@@ -137,59 +120,47 @@ export class Game {
         requestAnimationFrame(this.loop);
     }
 
-    // ==========================================
-    // Update
-    // ==========================================
-
     update(dt) {
-        // Freeze game if not playing
         if (this.state !== GAME_STATES.PLAYING) {
             return;
         }
 
-        // Update level system
         this.levelSystem.update(dt);
 
-        // Update spawn interval and fall speed based on level
         this.spawnSystem.spawnInterval = this.levelSystem.getSpawnInterval();
         this.spawnSystem.baseSpeed = this.levelSystem.getFallSpeed();
 
-        // Get hand position from tracker
         const handTracker = window.CATCHY?.handTracker;
         if (handTracker && handTracker.isHandDetected()) {
             const handX = handTracker.getHandX();
             this.player.setHandPosition(handX, this.width);
         }
 
-        // Update farmer
         this.player.update(dt);
 
-        // Update falling objects
         this.spawnSystem.update(dt);
 
-        // Update effects
         this.effectManager.update(dt);
 
-        // Check catches and misses
         this.handleObjectInteractions();
 
-        // End game when lives reach zero
         if (this.lives <= 0) {
             this.lives = 0;
             this.state = GAME_STATES.GAME_OVER;
+
+            if (this.sounds.bgm) {
+                this.sounds.bgm.pause();
+                this.sounds.bgm.currentTime = 0;
+            }
+
             console.log("Game over");
         }
     }
-
-    // ==========================================
-    // Collision and Miss Handling
-    // ==========================================
 
     handleObjectInteractions() {
         const remainingObjects = [];
 
         for (const object of this.spawnSystem.objects) {
-            // Farmer caught the object
             if (playerCaughtObject(this.player, object)) {
                 const result = getCatchResult(object.type);
 
@@ -198,7 +169,6 @@ export class Game {
 
                 this.applyReaction(result.reaction);
 
-                // Play sound (if not muted)
                 if (!this.isMuted) {
                     if (object.type === "EGG" || object.type === "GOLDEN_EGG") {
                         this.audio.play("catchEgg");
@@ -207,7 +177,6 @@ export class Game {
                     }
                 }
 
-                // Spawn effect for golden egg
                 if (object.type === "GOLDEN_EGG") {
                     this.effectManager.spawnSparkles(object.x + object.width / 2, object.y + object.height / 2, 12);
                 }
@@ -219,7 +188,6 @@ export class Game {
                 continue;
             }
 
-            // Object passed the bottom of the screen
             if (object.isOffScreen(this.height) && !object.missAlreadyProcessed) {
                 object.missAlreadyProcessed = true;
 
@@ -243,10 +211,6 @@ export class Game {
         this.spawnSystem.objects = remainingObjects;
     }
 
-    // ==========================================
-    // Farmer Reaction
-    // ==========================================
-
     applyReaction(reaction) {
         if (reaction === "happy") {
             this.player.showHappy();
@@ -255,36 +219,22 @@ export class Game {
         }
     }
 
-    // ==========================================
-    // Draw
-    // ==========================================
-
     draw() {
         this.ctx.clearRect(0, 0, this.width, this.height);
 
-        // Draw background
         this.drawBackground();
 
-        // Draw farmer
         this.player.draw(this.ctx);
         this.player.drawCatchZone(this.ctx);
 
-        // Draw falling objects
         this.spawnSystem.draw(this.ctx);
 
-        // Draw effects
         this.effectManager.draw(this.ctx);
 
-        // Draw HUD
         this.drawHUD();
 
-        // Draw Overlays (Menu, Pause, Game Over)
         this.drawOverlay();
     }
-
-    // ==========================================
-    // HUD (Score + Hearts on canvas)
-    // ==========================================
 
     drawHUD() {
         const scale = this.height / 720;
@@ -325,7 +275,6 @@ export class Game {
             this.ctx.restore();
         }
 
-        // Debug gesture text
         const handTracker = window.CATCHY?.handTracker;
         if (handTracker) {
             const gesture = handTracker.getCurrentGesture();
@@ -341,10 +290,6 @@ export class Game {
             }
         }
     }
-
-    // ==========================================
-    // Background
-    // ==========================================
 
     drawBackground() {
         const background = this.assets.background;
@@ -373,10 +318,6 @@ export class Game {
 
         this.ctx.drawImage(background, offsetX, offsetY, drawWidth, drawHeight);
     }
-
-    // ==========================================
-    // Overlays (Menu, Pause, Game Over)
-    // ==========================================
 
     drawOverlay() {
         if (this.state === GAME_STATES.MENU) {

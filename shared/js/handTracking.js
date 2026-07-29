@@ -1,7 +1,3 @@
-/* ==========================================
-   Shared Hand Tracking with Freeze Recovery
-========================================== */
-
 export class HandTracker {
     constructor() {
         this.video = document.getElementById("webcamVideo");
@@ -25,7 +21,6 @@ export class HandTracker {
 
         this.onGestureChange = null;
 
-        // Freeze detection
         this.lastFrameTime = 0;
         this.freezeCheckInterval = null;
         this.isSetupInProgress = false;
@@ -56,26 +51,23 @@ export class HandTracker {
 
             await this._startCamera();
 
-            // Check for freeze every 4 seconds
             if (this.freezeCheckInterval) clearInterval(this.freezeCheckInterval);
             this.freezeCheckInterval = setInterval(() => {
                 this._checkFreeze();
             }, 4000);
 
-            console.log("✅ Hand tracking ready");
+            console.log("Hand tracking ready");
             this.isSetupInProgress = false;
 
         } catch (err) {
-            console.error("❌ Hand tracking setup failed:", err);
+            console.error("Hand tracking setup failed:", err);
             this.isSetupInProgress = false;
-            // Retry after 3 seconds
             setTimeout(() => this.setup(), 3000);
         }
     }
 
     async _startCamera() {
         try {
-            // Stop old camera if exists
             if (this.camera) {
                 try {
                     this.camera.stop();
@@ -97,10 +89,10 @@ export class HandTracker {
 
             await this.camera.start();
             this.lastFrameTime = Date.now();
-            console.log("📷 Camera started");
+            console.log("Camera started");
 
         } catch (err) {
-            console.error("📷 Camera start failed:", err);
+            console.error("Camera start failed:", err);
             setTimeout(() => this._startCamera(), 3000);
         }
     }
@@ -109,18 +101,15 @@ export class HandTracker {
         const now = Date.now();
         const timeSinceLastFrame = now - this.lastFrameTime;
 
-        // If no frame for 6 seconds, restart camera
         if (this.lastFrameTime > 0 && timeSinceLastFrame > 6000) {
-            console.warn("⚠️ Camera frozen! Restarting...");
+            console.warn("Camera frozen! Restarting...");
             this._startCamera();
         }
     }
 
     onResults(results) {
-        // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Draw video
         if (results.image) {
             this.ctx.save();
             this.ctx.scale(-1, 1);
@@ -132,7 +121,6 @@ export class HandTracker {
             this.ctx.restore();
         }
 
-        // Process hands
         if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
             this.detected = true;
             this.landmarks = results.multiHandLandmarks[0];
@@ -143,11 +131,7 @@ export class HandTracker {
             this.previousGesture = this.currentGesture;
             this.currentGesture = this.detectGesture(this.landmarks);
 
-            if (this.currentGesture === "OPEN_PALM") {
-                this._checkWave();
-            } else {
-                this.waveHistory = [];
-            }
+            this._checkWave();
 
             if (this.currentGesture !== this.previousGesture && this.onGestureChange) {
                 this.onGestureChange(this.currentGesture, this.previousGesture);
@@ -228,7 +212,8 @@ export class HandTracker {
         const indexTip = landmarks[8];
         const dist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
         const middleDown = landmarks[12].y > landmarks[10].y;
-        return dist < 0.05 && middleDown;
+
+        return dist < 0.08 && middleDown;
     }
 
     isOneFingerUp(landmarks) {
@@ -244,19 +229,24 @@ export class HandTracker {
         const delta = this.handX - this.prevHandX;
         let dir = 0;
 
-        if (delta > 40) dir = 1;
-        else if (delta < -40) dir = -1;
+        if (delta > 40) {
+            dir = 1;
+        } else if (delta < -40) {
+            dir = -1;
+        }
 
         if (dir !== 0) {
             const lastEntry = this.waveHistory[this.waveHistory.length - 1];
             if (!lastEntry || lastEntry.dir !== dir) {
                 this.waveHistory.push({ time: now, dir: dir });
+                console.log("Wave entry added. Direction:", dir, "Total entries:", this.waveHistory.length);
             }
         }
 
-        this.waveHistory = this.waveHistory.filter(entry => now - entry.time < 1500);
+        this.waveHistory = this.waveHistory.filter(entry => now - entry.time < 3000);
 
-        if (this.waveHistory.length >= 4) {
+        if (this.waveHistory.length >= 3) {
+            console.log("Wave gesture detected!");
             this.currentGesture = "WAVE";
             this.waveHistory = [];
         }
