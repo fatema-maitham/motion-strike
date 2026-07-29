@@ -16,7 +16,8 @@ const ASSET_SOURCES = {
 
 const SOUND_SOURCES = {
     catchEgg: "assets/sounds/catch.wav",
-    bomb: "assets/sounds/bomb.wav"
+    bomb: "assets/sounds/bomb.wav",
+    bgm: "assets/sounds/bgm.mp3"
 };
 
 function createImages(sources) {
@@ -32,7 +33,9 @@ function createImages(sources) {
 function createSounds(sources) {
     const output = {};
     for (const [key, src] of Object.entries(sources)) {
-        output[key] = new Audio(src);
+        const audio = new Audio(src);
+        if (key === "bgm") audio.loop = true;
+        output[key] = audio;
     }
     return output;
 }
@@ -122,17 +125,32 @@ window.addEventListener("DOMContentLoaded", () => {
 
         // Unlock audio on first user action
         const unlockAudio = () => {
+            // Unlock all audio contexts by playing/pausing each sound
             for (const audio of Object.values(sounds)) {
                 if (audio) {
                     audio.volume = 0;
                     audio.play().catch(() => { });
                     audio.pause();
-                    audio.volume = 0.7;
+                    audio.currentTime = 0;
                 }
             }
+
+            // Start BGM with low volume
+            if (sounds.bgm) {
+                sounds.bgm.volume = 0.5;
+                sounds.bgm.play().catch(() => { });
+            }
+
+            // Set volume for SFX
+            if (sounds.catchEgg) sounds.catchEgg.volume = 1.0;
+            if (sounds.bomb) sounds.bomb.volume = 1.0;
+
             document.removeEventListener("click", unlockAudio);
             document.removeEventListener("touchstart", unlockAudio);
         };
+
+        document.addEventListener("click", unlockAudio);
+        document.addEventListener("touchstart", unlockAudio);
 
         document.addEventListener("click", unlockAudio);
         document.addEventListener("touchstart", unlockAudio);

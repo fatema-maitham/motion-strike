@@ -19,7 +19,8 @@ const ASSET_SOURCES = {
 const SOUND_SOURCES = {
     flap: "assets/sounds/flap.mp3",
     score: "assets/sounds/score.mp3",
-    hit: "assets/sounds/hit.mp3"
+    hit: "assets/sounds/hit.mp3",
+    bgm: "assets/sounds/bgm.mp3"
 };
 
 function createImages(sources) {
@@ -35,7 +36,9 @@ function createImages(sources) {
 function createSounds(sources) {
     const output = {};
     for (const [key, src] of Object.entries(sources)) {
-        output[key] = new Audio(src);
+        const audio = new Audio(src);
+        if (key === "bgm") audio.loop = true;
+        output[key] = audio;
     }
     return output;
 }
@@ -118,17 +121,33 @@ window.addEventListener("DOMContentLoaded", () => {
     handTracker.setup();
 
     const unlockAudio = () => {
+        // Unlock all audio
         for (const audio of Object.values(sounds)) {
             if (audio) {
                 audio.volume = 0;
                 audio.play().catch(() => { });
                 audio.pause();
-                audio.volume = 0.7;
+                audio.currentTime = 0;
             }
         }
+
+        // Start BGM
+        if (sounds.bgm) {
+            sounds.bgm.volume = 0.4;
+            sounds.bgm.play().catch(() => { });
+        }
+
+        // Set SFX volume
+        if (sounds.flap) sounds.flap.volume = 0.7;
+        if (sounds.score) sounds.score.volume = 0.7;
+        if (sounds.hit) sounds.hit.volume = 0.7;
+
         document.removeEventListener("click", unlockAudio);
         document.removeEventListener("touchstart", unlockAudio);
     };
+
+    document.addEventListener("click", unlockAudio);
+    document.addEventListener("touchstart", unlockAudio);
 
     document.addEventListener("click", unlockAudio);
     document.addEventListener("touchstart", unlockAudio);
