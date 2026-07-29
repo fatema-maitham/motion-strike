@@ -101,7 +101,9 @@ window.addEventListener("DOMContentLoaded", () => {
     });
 
     gestureSystem.on("WAVE", () => {
-        window.location.href = "../../index.html";
+        if (gameState === "PAUSED" || gameState === "MENU" || gameState === "GAMEOVER") {
+            window.location.href = "../../index.html";
+        }
     });
 
     window.addEventListener("keydown", onKey);
