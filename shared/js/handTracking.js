@@ -1,6 +1,5 @@
 /* ==========================================
-   Shared Hand Tracking
-   Used by all games
+   Shared Hand Tracking with Freeze Recovery
 ========================================== */
 
 export class HandTracker {
@@ -12,35 +11,32 @@ export class HandTracker {
         this.hands = null;
         this.camera = null;
 
-        /* hand state */
         this.detected = false;
         this.landmarks = null;
 
-        /* position */
         this.handX = 0;
         this.handY = 0;
 
-        /* gesture states */
         this.currentGesture = null;
         this.previousGesture = null;
 
-        /* wave tracking */
         this.waveHistory = [];
         this.prevHandX = 0;
 
-        /* gesture callbacks */
         this.onGestureChange = null;
+
+        // Freeze detection
+        this.lastFrameTime = 0;
+        this.freezeCheckInterval = null;
+        this.isSetupInProgress = false;
     }
 
-    /* ==========================================
-       Setup
-    ========================================== */
     async setup() {
+        if (this.isSetupInProgress) return;
+        this.isSetupInProgress = true;
+
         try {
-            if (
-                typeof window.Hands === "undefined" ||
-                typeof window.Camera === "undefined"
-            ) {
+            if (typeof window.Hands === "undefined" || typeof window.Camera === "undefined") {
                 throw new Error("MediaPipe libraries not loaded.");
             }
 
@@ -58,28 +54,73 @@ export class HandTracker {
 
             this.hands.onResults(this.onResults.bind(this));
 
+            await this._startCamera();
+
+            // Check for freeze every 4 seconds
+            if (this.freezeCheckInterval) clearInterval(this.freezeCheckInterval);
+            this.freezeCheckInterval = setInterval(() => {
+                this._checkFreeze();
+            }, 4000);
+
+            console.log("✅ Hand tracking ready");
+            this.isSetupInProgress = false;
+
+        } catch (err) {
+            console.error("❌ Hand tracking setup failed:", err);
+            this.isSetupInProgress = false;
+            // Retry after 3 seconds
+            setTimeout(() => this.setup(), 3000);
+        }
+    }
+
+    async _startCamera() {
+        try {
+            // Stop old camera if exists
+            if (this.camera) {
+                try {
+                    this.camera.stop();
+                } catch (e) { }
+            }
+
             this.camera = new window.Camera(this.video, {
                 onFrame: async () => {
-                    await this.hands.send({ image: this.video });
+                    try {
+                        await this.hands.send({ image: this.video });
+                        this.lastFrameTime = Date.now();
+                    } catch (e) {
+                        console.warn("Frame processing error:", e.message);
+                    }
                 },
                 width: 640,
                 height: 480,
             });
 
             await this.camera.start();
-            console.log("Hand tracking ready");
+            this.lastFrameTime = Date.now();
+            console.log("📷 Camera started");
 
         } catch (err) {
-            console.error("Hand tracking setup failed:", err);
+            console.error("📷 Camera start failed:", err);
+            setTimeout(() => this._startCamera(), 3000);
         }
     }
 
-    /* ==========================================
-       Results
-    ========================================== */
+    _checkFreeze() {
+        const now = Date.now();
+        const timeSinceLastFrame = now - this.lastFrameTime;
+
+        // If no frame for 6 seconds, restart camera
+        if (this.lastFrameTime > 0 && timeSinceLastFrame > 6000) {
+            console.warn("⚠️ Camera frozen! Restarting...");
+            this._startCamera();
+        }
+    }
+
     onResults(results) {
+        // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+        // Draw video
         if (results.image) {
             this.ctx.save();
             this.ctx.scale(-1, 1);
@@ -91,10 +132,8 @@ export class HandTracker {
             this.ctx.restore();
         }
 
-        if (
-            results.multiHandLandmarks &&
-            results.multiHandLandmarks.length > 0
-        ) {
+        // Process hands
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
             this.detected = true;
             this.landmarks = results.multiHandLandmarks[0];
 
@@ -104,22 +143,17 @@ export class HandTracker {
             this.previousGesture = this.currentGesture;
             this.currentGesture = this.detectGesture(this.landmarks);
 
-            // Wave override
             if (this.currentGesture === "OPEN_PALM") {
                 this._checkWave();
             } else {
                 this.waveHistory = [];
             }
 
-            if (
-                this.currentGesture !== this.previousGesture &&
-                this.onGestureChange
-            ) {
+            if (this.currentGesture !== this.previousGesture && this.onGestureChange) {
                 this.onGestureChange(this.currentGesture, this.previousGesture);
             }
 
             this.drawLandmarks(this.landmarks);
-
         } else {
             this.detected = false;
             this.landmarks = null;
@@ -129,9 +163,6 @@ export class HandTracker {
         }
     }
 
-    /* ==========================================
-       Gesture Detection (Order Matters!)
-    ========================================== */
     detectGesture(landmarks) {
         if (this.isThumbsUp(landmarks)) return "THUMBS_UP";
         if (this.isPeaceSign(landmarks)) return "PEACE_SIGN";
@@ -208,9 +239,6 @@ export class HandTracker {
         return indexUp && middleDown && ringDown && pinkyDown;
     }
 
-    /* ==========================================
-       Wave Detection (Strict)
-    ========================================== */
     _checkWave() {
         const now = Date.now();
         const delta = this.handX - this.prevHandX;
@@ -236,9 +264,6 @@ export class HandTracker {
         this.prevHandX = this.handX;
     }
 
-    /* ==========================================
-       Draw Landmarks
-    ========================================== */
     drawLandmarks(landmarks) {
         this.ctx.fillStyle = "rgb(0, 255, 0)";
         this.ctx.strokeStyle = "rgb(0, 255, 0)";
@@ -253,12 +278,18 @@ export class HandTracker {
         }
     }
 
-    /* ==========================================
-       Public Getters
-    ========================================== */
     isHandDetected() { return this.detected; }
     getHandX() { return this.handX; }
     getHandY() { return this.handY; }
     getCurrentGesture() { return this.currentGesture; }
     getPreviousGesture() { return this.previousGesture; }
+
+    destroy() {
+        if (this.freezeCheckInterval) clearInterval(this.freezeCheckInterval);
+        if (this.camera) {
+            try {
+                this.camera.stop();
+            } catch (e) { }
+        }
+    }
 }
