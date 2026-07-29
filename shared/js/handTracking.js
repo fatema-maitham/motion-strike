@@ -194,14 +194,9 @@ export class HandTracker {
         const middleUp = landmarks[12].y < landmarks[10].y;
         const ringDown = landmarks[16].y > landmarks[14].y;
         const pinkyDown = landmarks[20].y > landmarks[18].y;
+        const thumbFolded = landmarks[4].y > landmarks[3].y;
 
-        const thumbDown = landmarks[4].y > landmarks[3].y;
-        const thumbUp = landmarks[4].y < landmarks[3].y;
-
-        const indexMiddleUp = indexUp && middleUp;
-        const otherFingersClosed = ringDown && pinkyDown;
-
-        return indexMiddleUp && otherFingersClosed && (thumbDown || thumbUp);
+        return indexUp && middleUp && ringDown && pinkyDown && thumbFolded;
     }
 
     isOkGesture(landmarks) {

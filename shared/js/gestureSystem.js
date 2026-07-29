@@ -6,7 +6,7 @@ export class GestureSystem {
 
         this.lastGestureTime = {};
         this.gestureCooldown = 300;
-
+        this.lastOpenPalmTime = 0;
         this.handTracker.onGestureChange = (current, previous) => {
             this.handleGesture(current, previous);
         };
@@ -44,7 +44,9 @@ export class GestureSystem {
                 break;
 
             case "PEACE_SIGN":
-                console.log("Gesture: Peace Sign - Pause Resume");
+                if (Date.now() - this.lastOpenPalmTime < 400) {
+                    return;
+                }
                 this.callbacks["PEACE_SIGN"]?.();
                 break;
 
@@ -54,6 +56,7 @@ export class GestureSystem {
                 break;
 
             case "OPEN_PALM":
+                this.lastOpenPalmTime = Date.now();
                 this.callbacks["OPEN_PALM"]?.();
                 break;
 

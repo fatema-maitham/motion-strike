@@ -91,6 +91,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
     gestureSystem.on("PEACE_SIGN", () => {
         if (gameState === "PLAYING") {
+            const prev = handTracker.getPreviousGesture();
+            if (prev === "OPEN_PALM") return;
+
             gameState = "PAUSED";
             if (sounds.bgm) sounds.bgm.pause();
         } else if (gameState === "PAUSED") {
