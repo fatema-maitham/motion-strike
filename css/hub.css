@@ -45,28 +45,6 @@ body {
     transform: scale(1.1);
 }
 
-.card-badge {
-    position: absolute;
-    bottom: 14px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.72);
-    color: #ffffff;
-    font-family: monospace;
-    font-size: 13px;
-    padding: 6px 16px;
-    border-radius: 20px;
-    letter-spacing: 1px;
-    pointer-events: none;
-}
-
-.hub-hint {
-    font-family: monospace;
-    font-size: 14px;
-    color: #999999;
-    letter-spacing: 1px;
-}
-
 .corner-btn-left {
     position: fixed;
     top: 24px;
@@ -114,11 +92,6 @@ body {
         width: 190px;
         height: 190px;
         border-width: 4px;
-    }
-
-    .card-badge {
-        font-size: 11px;
-        padding: 4px 12px;
     }
 
     .corner-btn-left {
