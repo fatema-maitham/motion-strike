@@ -221,11 +221,20 @@ export class HandTracker {
     isPinch(landmarks) {
         const thumbTip = landmarks[4];
         const indexTip = landmarks[8];
+        const wrist = landmarks[0];
+        const indexMcp = landmarks[5];
+
         const dist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
+
+        const indexReach = Math.hypot(indexTip.x - wrist.x, indexTip.y - wrist.y);
+        const palmSize = Math.hypot(indexMcp.x - wrist.x, indexMcp.y - wrist.y);
+        const indexExtended = indexReach > palmSize * 1.15;
+
         const middleDown = landmarks[12].y > landmarks[10].y;
         const ringDown = landmarks[16].y > landmarks[14].y;
         const pinkyDown = landmarks[20].y > landmarks[18].y;
-        return dist < 0.06 && middleDown && ringDown && pinkyDown;
+
+        return dist < 0.06 && indexExtended && middleDown && ringDown && pinkyDown;
     }
 
     isOneFingerUp(landmarks) {
