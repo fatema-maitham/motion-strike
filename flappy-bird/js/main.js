@@ -232,6 +232,12 @@ function onKey(e) {
         isMuted = !isMuted;
         console.log("Audio muted:", isMuted);
     }
+
+    if (e.code === "Escape") {
+        if (gameState === "PAUSED" || gameState === "MENU" || gameState === "GAMEOVER") {
+            window.location.href = "../games.html";
+        }
+    }
 }
 
 function onTap() {

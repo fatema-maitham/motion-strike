@@ -128,6 +128,30 @@ window.addEventListener("DOMContentLoaded", () => {
         // Start immediately
         game.start();
 
+
+        window.addEventListener("keydown", (e) => {
+            if (e.code === "Enter") {
+                if (game.state === "MENU" || game.state === "GAME_OVER") {
+                    game.restart();
+                }
+            }
+            if (e.code === "KeyP") {
+                if (game.state === "PLAYING") {
+                    game.pause();
+                } else if (game.state === "PAUSED") {
+                    game.resume();
+                }
+            }
+            if (e.code === "KeyM") {
+                game.toggleMute();
+            }
+            if (e.code === "Escape") {
+                if (game.state === "PAUSED" || game.state === "MENU" || game.state === "GAME_OVER") {
+                    window.location.href = "../games.html";
+                }
+            }
+        });
+
         // Camera / hand tracking starts in background
         handTracker.setup();
 

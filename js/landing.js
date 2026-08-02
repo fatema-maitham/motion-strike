@@ -60,6 +60,7 @@ window.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+
     window.addEventListener("keydown", (e) => {
         if (e.code === "Escape" && panelOpen) {
             closePanel();
@@ -67,7 +68,9 @@ window.addEventListener("DOMContentLoaded", () => {
         if (e.code === "Enter" && !panelOpen) {
             goToGames();
         }
+        if (e.code === "KeyH" && !panelOpen) {
+            openPanel();
+        }
     });
-
     handTracker.setup();
 });
