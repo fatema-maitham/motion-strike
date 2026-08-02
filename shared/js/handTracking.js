@@ -24,6 +24,9 @@ export class HandTracker {
         this.lastFrameTime = 0;
         this.freezeCheckInterval = null;
         this.isSetupInProgress = false;
+
+        this.gestureBadge = null;
+        this.gestureBadgeTimer = null;
     }
 
     async setup() {
@@ -135,6 +138,7 @@ export class HandTracker {
 
             if (this.currentGesture !== this.previousGesture && this.onGestureChange) {
                 this.onGestureChange(this.currentGesture, this.previousGesture);
+                this._updateGestureBadge(this.currentGesture);
             }
 
             this.drawLandmarks(this.landmarks);
@@ -266,6 +270,36 @@ export class HandTracker {
             this.ctx.beginPath();
             this.ctx.arc(x, y, 4, 0, Math.PI * 2);
             this.ctx.fill();
+        }
+    }
+    _updateGestureBadge(gesture) {
+        if (!this.gestureBadge) {
+            this.gestureBadge = document.getElementById("gestureBadge");
+        }
+        if (!this.gestureBadge) return;
+
+        const gestureLabels = {
+            THUMBS_UP: "👍 Thumbs Up",
+            PEACE_SIGN: "✌️ Peace Sign",
+            OK: "👌 OK Sign",
+            PINCH: "🤏 Pinch",
+            ONE_FINGER: "☝️ One Finger",
+            CLOSED_FIST: "✊ Closed Fist",
+            OPEN_PALM: "✋ Open Palm",
+            WAVE: "👋 Wave",
+        };
+
+        const label = gestureLabels[gesture];
+
+        if (label) {
+            this.gestureBadge.textContent = label;
+            this.gestureBadge.classList.add("visible");
+
+            if (this.gestureBadgeTimer) clearTimeout(this.gestureBadgeTimer);
+
+            this.gestureBadgeTimer = setTimeout(() => {
+                this.gestureBadge.classList.remove("visible");
+            }, 1500);
         }
     }
 

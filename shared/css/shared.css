@@ -269,3 +269,30 @@ img {
         width: 68px;
     }
 }
+
+/* ==========================================
+   Gesture Badge (shows on all screens)
+========================================== */
+#gestureBadge {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: #00ff88;
+    font-family: sans-serif;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 10px 26px;
+    border-radius: 30px;
+    pointer-events: none;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    z-index: 99999;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+#gestureBadge.visible {
+    opacity: 1;
+}
