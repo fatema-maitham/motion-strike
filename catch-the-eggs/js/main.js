@@ -69,38 +69,136 @@ window.CATCHY = {
     handTracker: null,
 };
 
+// ==========================================
+//   AUDIO UNLOCK
+// ==========================================
+let audioUnlocked = false;
+
+function unlockAudio(sounds) {
+    if (audioUnlocked) return;
+    audioUnlocked = true;
+
+    for (const audio of Object.values(sounds)) {
+        if (!audio) continue;
+        audio.volume = 0;
+        audio.play().then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+        }).catch(() => { });
+    }
+
+    if (sounds.bgm) sounds.bgm.volume = 0.05;
+    if (sounds.catchEgg) sounds.catchEgg.volume = 1.0;
+    if (sounds.bomb) sounds.bomb.volume = 1.0;
+}
+
 window.addEventListener("DOMContentLoaded", () => {
+    const canvas = document.getElementById("gameCanvas");
+    if (!canvas) return;
+
+    resizeCanvas(canvas);
+
+    const assets = createImages(ASSET_SOURCES);
+    const sounds = createSounds(SOUND_SOURCES);
+
+    window.CATCHY.assets = assets;
+    window.CATCHY.sounds = sounds;
+    window.CATCHY.ready = true;
+
+    const game = new Game(canvas, assets, sounds);
+    window.CATCHY.game = game;
+
+    game.start();
+
+    // ==========================================
+    //   BACK BUTTON
+    // ==========================================
+    const backBtn = document.getElementById("backBtn");
+    if (backBtn) {
+        backBtn.blur();
+        backBtn.addEventListener("mousedown", (e) => {
+            e.preventDefault();
+        });
+        backBtn.addEventListener("click", () => {
+            backBtn.blur();
+            if (
+                game.state === "PAUSED" ||
+                game.state === "MENU" ||
+                game.state === "GAME_OVER"
+            ) {
+                window.location.href = "../games.html";
+            }
+        });
+    }
+
+    // ==========================================
+    //   KEYBOARD
+    // ==========================================
+    window.addEventListener("keydown", (e) => {
+        const key = e.key;
+        const code = e.code;
+
+        try {
+            unlockAudio(sounds);
+        } catch (err) {
+            // audio unlock failed — game still works
+        }
+
+        if (key === "Enter" || code === "Enter" || code === "NumpadEnter") {
+            e.preventDefault();
+
+            if (game.state === "MENU" || game.state === "GAME_OVER") {
+                game.restart();
+            }
+            return;
+        }
+
+        if (key === "p" || key === "P") {
+            if (game.state === "PLAYING") {
+                game.pause();
+            } else if (game.state === "PAUSED") {
+                game.resume();
+            }
+            return;
+        }
+
+        if (key === "m" || key === "M") {
+            game.toggleMute();
+            return;
+        }
+
+        if (key === "Escape") {
+            if (
+                game.state === "PAUSED" ||
+                game.state === "MENU" ||
+                game.state === "GAME_OVER"
+            ) {
+                window.location.href = "../games.html";
+            }
+        }
+    });
+
+    // ==========================================
+    //   MOUSE AND TOUCH UNLOCK
+    // ==========================================
+    document.addEventListener("click", () => {
+        try { unlockAudio(sounds); } catch (err) { }
+    });
+    document.addEventListener("touchstart", () => {
+        try { unlockAudio(sounds); } catch (err) { }
+    });
+
+    // ==========================================
+    //   HAND TRACKING
+    // ==========================================
     try {
-        const canvas = document.getElementById("gameCanvas");
-        if (!canvas) return;
-
-        resizeCanvas(canvas);
-
-        // No waiting
-        const assets = createImages(ASSET_SOURCES);
-        const sounds = createSounds(SOUND_SOURCES);
-
-        window.CATCHY.assets = assets;
-        window.CATCHY.sounds = sounds;
-        window.CATCHY.ready = true;
-
-        const game = new Game(canvas, assets, sounds);
-        window.CATCHY.game = game;
-
         const handTracker = new HandTracker();
         window.CATCHY.handTracker = handTracker;
 
         const gestureSystem = new GestureSystem(handTracker);
 
-        const backBtn = document.getElementById("backBtn");
-        if (backBtn) {
-            backBtn.addEventListener("click", () => {
-                if (game.state === "PAUSED" || game.state === "MENU" || game.state === "GAME_OVER") {
-                    window.location.href = "../games.html";
-                }
-            });
-        }
         gestureSystem.on("THUMBS_UP", () => {
+            try { unlockAudio(sounds); } catch (err) { }
             if (game.state === "MENU" || game.state === "GAME_OVER") {
                 game.restart();
             }
@@ -119,75 +217,24 @@ window.addEventListener("DOMContentLoaded", () => {
         });
 
         gestureSystem.on("WAVE", () => {
-            // Only allow exit if game is paused or in menu/gameover
-            if (game.state === "PAUSED" || game.state === "MENU" || game.state === "GAME_OVER") {
+            if (
+                game.state === "PAUSED" ||
+                game.state === "MENU" ||
+                game.state === "GAME_OVER"
+            ) {
                 window.location.href = "../games.html";
             }
         });
 
-        // Start immediately
-        game.start();
-
-
-        window.addEventListener("keydown", (e) => {
-            if (e.code === "Enter") {
-                if (game.state === "MENU" || game.state === "GAME_OVER") {
-                    game.restart();
-                }
-            }
-            if (e.code === "KeyP") {
-                if (game.state === "PLAYING") {
-                    game.pause();
-                } else if (game.state === "PAUSED") {
-                    game.resume();
-                }
-            }
-            if (e.code === "KeyM") {
-                game.toggleMute();
-            }
-            if (e.code === "Escape") {
-                if (game.state === "PAUSED" || game.state === "MENU" || game.state === "GAME_OVER") {
-                    window.location.href = "../games.html";
-                }
-            }
-        });
-
-        // Camera / hand tracking starts in background
         handTracker.setup();
-
-        // Unlock audio on first user action
-        const unlockAudio = () => {
-            for (const audio of Object.values(sounds)) {
-                if (audio) {
-                    audio.volume = 0;
-                    audio.play().catch(() => { });
-                    audio.pause();
-                    audio.currentTime = 0;
-                }
-            }
-
-            if (sounds.bgm) {
-                sounds.bgm.volume = 0.05;
-                sounds.bgm.play().catch(() => { });
-            }
-
-            if (sounds.catchEgg) sounds.catchEgg.volume = 1.0;
-            if (sounds.bomb) sounds.bomb.volume = 1.0;
-
-            document.removeEventListener("click", unlockAudio);
-            document.removeEventListener("touchstart", unlockAudio);
-        };
-
-        document.addEventListener("click", unlockAudio);
-        document.addEventListener("touchstart", unlockAudio);
-
-        document.addEventListener("click", unlockAudio);
-        document.addEventListener("touchstart", unlockAudio);
     } catch (error) {
-        console.error("Failed to start game:", error);
+        console.error("Hand tracking failed, keyboard still works:", error);
     }
 });
 
+// ==========================================
+//   RESIZE
+// ==========================================
 window.addEventListener("resize", () => {
     const canvas = document.getElementById("gameCanvas");
     const game = window.CATCHY?.game;

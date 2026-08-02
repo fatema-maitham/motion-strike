@@ -34,6 +34,7 @@ export class Game {
         this.score = 0;
         this.lives = 3;
         this.isMuted = false;
+        this.bgmVolume = 0.05;
 
         this.player = new Player(canvas, assets);
 
@@ -46,13 +47,12 @@ export class Game {
         this.levelSystem = new LevelSystem();
 
         this.loop = this.loop.bind(this);
-        this.bgmVolume = 0.05;
+
         this.hudScoreEl = null;
         this.hudHeartsEl = null;
     }
 
     start() {
-        console.log("Game engine started");
         this.state = GAME_STATES.MENU;
         this.lastTime = performance.now();
         requestAnimationFrame(this.loop);
@@ -63,6 +63,12 @@ export class Game {
     restart() {
         this.score = 0;
         this.lives = 3;
+
+        // ✅ destroy old player to remove its keydown listeners
+        if (this.player) {
+            this.player.destroy();
+        }
+
         this.player = new Player(this.canvas, this.assets);
         this.spawnSystem.reset();
         this.levelSystem.reset();
@@ -70,7 +76,7 @@ export class Game {
         this.lastTime = performance.now();
 
         if (this.sounds.bgm) {
-            this.sounds.bgm.volume = 0.05;
+            this.sounds.bgm.volume = this.bgmVolume;
             this.sounds.bgm.currentTime = 0;
             this.sounds.bgm.play().catch(e => console.log("BGM play blocked"));
         }
@@ -92,7 +98,7 @@ export class Game {
             this.lastTime = performance.now();
 
             if (this.sounds.bgm) {
-                this.sounds.bgm.volume = 0.05;
+                this.sounds.bgm.volume = this.bgmVolume;
                 this.sounds.bgm.play().catch(e => console.log("BGM play blocked"));
             }
         }
@@ -100,7 +106,6 @@ export class Game {
 
     toggleMute() {
         this.isMuted = !this.isMuted;
-        console.log("Audio muted:", this.isMuted);
     }
 
     resize(width, height) {
@@ -110,15 +115,17 @@ export class Game {
         this.canvas.width = width;
         this.canvas.height = height;
 
+        if (this.player) {
+            this.player.destroy();
+        }
+
         this.player = new Player(this.canvas, this.assets);
         this.spawnSystem.resize(width, height);
     }
 
     loop(currentTime) {
         this.deltaTime = (currentTime - this.lastTime) / 1000;
-
         this.deltaTime = Math.min(this.deltaTime, 0.05);
-
         this.lastTime = currentTime;
 
         this.update(this.deltaTime);
@@ -141,14 +148,14 @@ export class Game {
         if (handTracker && handTracker.isHandDetected()) {
             const handX = handTracker.getHandX();
             this.player.setHandPosition(handX, this.width);
+            this.player.useHandControl = true;
+        } else {
+            this.player.useHandControl = false;
         }
 
         this.player.update(dt);
-
         this.spawnSystem.update(dt);
-
         this.effectManager.update(dt);
-
         this.handleObjectInteractions();
 
         if (this.lives <= 0) {
@@ -159,8 +166,6 @@ export class Game {
                 this.sounds.bgm.pause();
                 this.sounds.bgm.currentTime = 0;
             }
-
-            console.log("Game over");
         }
 
         this.updateHUD();
@@ -187,12 +192,12 @@ export class Game {
                 }
 
                 if (object.type === "GOLDEN_EGG") {
-                    this.effectManager.spawnSparkles(object.x + object.width / 2, object.y + object.height / 2, 12);
+                    this.effectManager.spawnSparkles(
+                        object.x + object.width / 2,
+                        object.y + object.height / 2,
+                        12
+                    );
                 }
-
-                console.log(
-                    `Caught ${object.type}. Score: ${this.score}, Lives: ${this.lives}`
-                );
 
                 continue;
             }
@@ -206,10 +211,6 @@ export class Game {
                 this.lives += result.livesChange;
 
                 this.applyReaction(result.reaction);
-
-                console.log(
-                    `Missed ${object.type}. Score: ${this.score}, Lives: ${this.lives}`
-                );
 
                 continue;
             }
@@ -246,7 +247,6 @@ export class Game {
         this.drawBackground();
 
         this.player.draw(this.ctx);
-        this.player.drawCatchZone(this.ctx);
 
         this.spawnSystem.draw(this.ctx);
 
@@ -255,61 +255,6 @@ export class Game {
         this.updateHUD();
 
         this.drawOverlay();
-    }
-
-    drawHUD() {
-        const scale = this.height / 720;
-
-        this.ctx.save();
-        this.ctx.font = `${Math.round(40 * scale)}px "Pink Lemonade", sans-serif`;
-        this.ctx.fillStyle = "#ffffff";
-        this.ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
-        this.ctx.lineWidth = 5 * scale;
-        this.ctx.textBaseline = "top";
-        this.ctx.textAlign = "left";
-
-        const scoreText = `Score: ${this.score}`;
-        const leftPadding = 50 * scale;
-        const scoreX = leftPadding;
-        const scoreY = 20 * scale;
-
-        this.ctx.strokeText(scoreText, scoreX, scoreY);
-        this.ctx.fillText(scoreText, scoreX, scoreY);
-        this.ctx.restore();
-
-        const heartImg = this.assets.heart;
-        const heartSize = 45 * scale;
-        const heartGap = 8 * scale;
-        const heartsY = 75 * scale;
-        const heartsX = leftPadding;
-
-        for (let i = 0; i < 3; i++) {
-            const heartX = heartsX + i * (heartSize + heartGap);
-            this.ctx.save();
-            if (i >= this.lives) this.ctx.globalAlpha = 0.2;
-            if (heartImg) {
-                this.ctx.drawImage(heartImg, heartX, heartsY, heartSize, heartSize);
-            } else {
-                this.ctx.fillStyle = "#e74c3c";
-                this.ctx.fillRect(heartX, heartsY, heartSize, heartSize);
-            }
-            this.ctx.restore();
-        }
-
-        const handTracker = window.CATCHY?.handTracker;
-        if (handTracker) {
-            const gesture = handTracker.getCurrentGesture();
-            if (gesture) {
-                this.ctx.font = "16px Arial";
-                this.ctx.fillStyle = "yellow";
-                this.ctx.strokeStyle = "black";
-                this.ctx.lineWidth = 3;
-                this.ctx.textAlign = "left";
-                this.ctx.textBaseline = "top";
-                this.ctx.strokeText("Gesture: " + gesture, 10, 40);
-                this.ctx.fillText("Gesture: " + gesture, 10, 40);
-            }
-        }
     }
 
     drawBackground() {
@@ -344,19 +289,22 @@ export class Game {
         if (this.state === GAME_STATES.MENU) {
             this.ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
             this.ctx.fillRect(0, 0, this.width, this.height);
-            this.drawCenterText("CATCH THE EGGS", 48, -40);
-            this.drawCenterText("Thumbs Up to Start", 24, 40);
+            this.drawCenterText("CATCH THE EGGS", 48, -50);
+            this.drawCenterText("Thumbs Up to Start", 26, 20);
+            this.drawCenterText("or Press Enter", 22, 60);
         } else if (this.state === GAME_STATES.PAUSED) {
             this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
             this.ctx.fillRect(0, 0, this.width, this.height);
-            this.drawCenterText("PAUSED", 48, -20);
-            this.drawCenterText("Peace Sign to Resume", 24, 40);
+            this.drawCenterText("PAUSED", 48, -50);
+            this.drawCenterText("Peace Sign to Resume", 26, 20);
+            this.drawCenterText("or Press P", 22, 60);
         } else if (this.state === GAME_STATES.GAME_OVER) {
             this.ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
             this.ctx.fillRect(0, 0, this.width, this.height);
-            this.drawCenterText("GAME OVER", 48, -60);
-            this.drawCenterText(`Score: ${this.score}`, 32, 10);
-            this.drawCenterText("Thumbs Up to Restart", 24, 70);
+            this.drawCenterText("GAME OVER", 48, -80);
+            this.drawCenterText(`Score: ${this.score}`, 34, -10);
+            this.drawCenterText("Thumbs Up to Restart", 26, 55);
+            this.drawCenterText("or Press Enter", 22, 95);
         }
     }
 

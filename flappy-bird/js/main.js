@@ -20,8 +20,6 @@ const SOUND_SOURCES = {
     flap: "assets/sounds/flap.mp3",
     score: "assets/sounds/score.mp3",
     hit: "assets/sounds/hit.mp3",
-    wingLower: "assets/sounds/wing_lower.mp3",
-    die: "assets/sounds/die.mp3",
     bgm: "assets/sounds/bgm.mp3"
 };
 
@@ -87,7 +85,6 @@ window.addEventListener("DOMContentLoaded", () => {
         if (gameState === "PLAYING") {
             bird.flap();
             playSound("flap");
-            playSound("wingLower");
         }
     });
 
@@ -289,7 +286,6 @@ function update(dt) {
             if (gameState !== "GAMEOVER") {
                 gameState = "GAMEOVER";
                 gameOverSince = performance.now();
-                playSound("die");
                 playSound("hit");
                 if (sounds.bgm) {
                     sounds.bgm.pause();
