@@ -7,6 +7,8 @@ export class GestureSystem {
         this.lastGestureTime = {};
         this.gestureCooldown = 300;
         this.lastOpenPalmTime = 0;
+        this.lastClosedFistTime = 0;
+
         this.handTracker.onGestureChange = (current, previous) => {
             this.handleGesture(current, previous);
         };
@@ -22,7 +24,10 @@ export class GestureSystem {
         const now = Date.now();
         const lastTime = this.lastGestureTime[current] || 0;
 
-        if (now - lastTime < this.gestureCooldown) {
+        // OPEN_PALM gets shorter cooldown so fast flapping works
+        const cooldown = (current === "OPEN_PALM") ? 150 : this.gestureCooldown;
+
+        if (now - lastTime < cooldown) {
             return;
         }
 
@@ -33,6 +38,7 @@ export class GestureSystem {
                 console.log("Gesture: Wave - Return to Menu");
                 this.callbacks["WAVE"]?.();
                 break;
+
             case "THUMBS_UP":
                 console.log("Gesture: Thumbs Up - Start Select");
                 this.callbacks["THUMBS_UP"]?.();
@@ -44,9 +50,10 @@ export class GestureSystem {
                 break;
 
             case "PEACE_SIGN":
-                if (Date.now() - this.lastOpenPalmTime < 400) {
-                    return;
-                }
+                // Block if we just flapped (open or close hand)
+                if (now - this.lastOpenPalmTime < 400) return;
+                if (now - this.lastClosedFistTime < 400) return;
+                console.log("Gesture: Peace Sign - Pause Resume");
                 this.callbacks["PEACE_SIGN"]?.();
                 break;
 
@@ -56,11 +63,12 @@ export class GestureSystem {
                 break;
 
             case "OPEN_PALM":
-                this.lastOpenPalmTime = Date.now();
+                this.lastOpenPalmTime = now;
                 this.callbacks["OPEN_PALM"]?.();
                 break;
 
             case "CLOSED_FIST":
+                this.lastClosedFistTime = now;
                 this.callbacks["CLOSED_FIST"]?.();
                 break;
 

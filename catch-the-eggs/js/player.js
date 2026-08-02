@@ -25,11 +25,6 @@ export class Player {
             const ratio = idleImg.naturalWidth / idleImg.naturalHeight;
             this.height = baseHeight;
             this.width = baseHeight * ratio;
-
-            console.log(
-                `Farmer size: ${Math.round(this.width)} x ${Math.round(this.height)} ` +
-                `(ratio: ${ratio.toFixed(2)})`
-            );
         } else {
             this.width = 120 * this.scale;
             this.height = baseHeight;
@@ -61,15 +56,18 @@ export class Player {
 
     // ==========================================
     //   Keyboard Input
+    //   Pressing a key switches to KEYBOARD mode
     // ==========================================
 
     _onKeyDown(e) {
         if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
             this.keys.left = true;
+            this.useHandControl = false; // keyboard takes over
         }
 
         if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
             this.keys.right = true;
+            this.useHandControl = false; // keyboard takes over
         }
     }
 
@@ -85,12 +83,20 @@ export class Player {
 
     // ==========================================
     //   Hand Control
+    //   Moving hand switches to HAND mode
     // ==========================================
 
     setHandPosition(handX, gameCanvasWidth) {
         const normalizedX = (handX / 640) * gameCanvasWidth;
-        this.handTargetX = normalizedX - this.width / 2;
-        this.useHandControl = true;
+        const newTarget = normalizedX - this.width / 2;
+
+        // Only switch to hand control if hand actually moved a bit
+        // prevents jitter overriding keyboard when hand is still
+        if (Math.abs(newTarget - this.handTargetX) > 3) {
+            this.useHandControl = true;
+        }
+
+        this.handTargetX = newTarget;
     }
 
     // ==========================================
@@ -112,17 +118,16 @@ export class Player {
     // ==========================================
 
     update(dt) {
-        // Keyboard control
-        if (this.keys.left) {
-            this.x -= MOVE_SPEED * dt;
-        }
-
-        if (this.keys.right) {
-            this.x += MOVE_SPEED * dt;
-        }
-
-        // Hand control with lerp for smoothness
-        if (this.useHandControl) {
+        // Keyboard control (only when NOT using hand)
+        if (!this.useHandControl) {
+            if (this.keys.left) {
+                this.x -= MOVE_SPEED * dt;
+            }
+            if (this.keys.right) {
+                this.x += MOVE_SPEED * dt;
+            }
+        } else {
+            // Hand control with lerp for smoothness
             this.x = lerp(this.x, this.handTargetX, HAND_LERP_SPEED);
         }
 
@@ -132,7 +137,6 @@ export class Player {
         // Expression timer
         if (this.expressionTimer > 0) {
             this.expressionTimer -= dt;
-
             if (this.expressionTimer <= 0) {
                 this.expression = "idle";
                 this.expressionTimer = 0;
@@ -192,14 +196,11 @@ export class Player {
         const bounds = this.getBounds();
 
         ctx.save();
-
         ctx.fillStyle = "rgba(0, 255, 0, 0.15)";
         ctx.strokeStyle = "lime";
         ctx.lineWidth = 3;
-
         ctx.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
         ctx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
-
         ctx.restore();
     }
 

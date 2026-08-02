@@ -46,8 +46,8 @@ export class HandTracker {
             this.hands.setOptions({
                 maxNumHands: 1,
                 modelComplexity: 1,
-                minDetectionConfidence: 0.5,
-                minTrackingConfidence: 0.5,
+                minDetectionConfidence: 0.7,
+                minTrackingConfidence: 0.6,
             });
 
             this.hands.onResults(this.onResults.bind(this));
@@ -57,7 +57,7 @@ export class HandTracker {
             if (this.freezeCheckInterval) clearInterval(this.freezeCheckInterval);
             this.freezeCheckInterval = setInterval(() => {
                 this._checkFreeze();
-            }, 4000);
+            }, 2000);
 
             console.log("Hand tracking ready");
             this.isSetupInProgress = false;
@@ -72,9 +72,7 @@ export class HandTracker {
     async _startCamera() {
         try {
             if (this.camera) {
-                try {
-                    this.camera.stop();
-                } catch (e) { }
+                try { this.camera.stop(); } catch (e) { }
             }
 
             this.camera = new window.Camera(this.video, {
@@ -103,8 +101,7 @@ export class HandTracker {
     _checkFreeze() {
         const now = Date.now();
         const timeSinceLastFrame = now - this.lastFrameTime;
-
-        if (this.lastFrameTime > 0 && timeSinceLastFrame > 6000) {
+        if (this.lastFrameTime > 0 && timeSinceLastFrame > 3000) {
             console.warn("Camera frozen! Restarting...");
             this._startCamera();
         }
@@ -132,9 +129,16 @@ export class HandTracker {
             this.handY = this.landmarks[9].y * this.canvas.height;
 
             this.previousGesture = this.currentGesture;
-            this.currentGesture = this.detectGesture(this.landmarks);
 
-            this._checkWave();
+            // Check wave FIRST using movement
+            // If wave detected it overrides the shape-based gesture
+            const waveDetected = this._checkWave();
+
+            if (waveDetected) {
+                this.currentGesture = "WAVE";
+            } else {
+                this.currentGesture = this.detectGesture(this.landmarks);
+            }
 
             if (this.currentGesture !== this.previousGesture && this.onGestureChange) {
                 this.onGestureChange(this.currentGesture, this.previousGesture);
@@ -148,6 +152,7 @@ export class HandTracker {
             this.currentGesture = null;
             this.previousGesture = null;
             this.waveHistory = [];
+            this.prevHandX = 0;
         }
     }
 
@@ -183,23 +188,23 @@ export class HandTracker {
     }
 
     isThumbsUp(landmarks) {
-        const thumbUp = landmarks[4].y < landmarks[3].y;
+        const thumbUp = landmarks[4].y < landmarks[2].y;
+        const thumbHighEnough = landmarks[4].y < landmarks[9].y;
         const tips = [8, 12, 16, 20];
         const pips = [6, 10, 14, 18];
         let fingersFolded = 0;
         for (let i = 0; i < tips.length; i++) {
             if (landmarks[tips[i]].y > landmarks[pips[i]].y) fingersFolded++;
         }
-        return thumbUp && fingersFolded >= 3;
+        return thumbUp && thumbHighEnough && fingersFolded >= 3;
     }
 
     isPeaceSign(landmarks) {
-        const indexUp = landmarks[8].y < landmarks[6].y;
-        const middleUp = landmarks[12].y < landmarks[10].y;
+        const indexUp = landmarks[8].y < landmarks[5].y;
+        const middleUp = landmarks[12].y < landmarks[9].y;
         const ringDown = landmarks[16].y > landmarks[14].y;
         const pinkyDown = landmarks[20].y > landmarks[18].y;
-        const thumbFolded = landmarks[4].y > landmarks[3].y;
-
+        const thumbFolded = landmarks[4].x > landmarks[3].x;
         return indexUp && middleUp && ringDown && pinkyDown && thumbFolded;
     }
 
@@ -209,7 +214,8 @@ export class HandTracker {
         const dist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
         const middleUp = landmarks[12].y < landmarks[10].y;
         const ringUp = landmarks[16].y < landmarks[14].y;
-        return dist < 0.05 && middleUp && ringUp;
+        const pinkyUp = landmarks[20].y < landmarks[18].y;
+        return dist < 0.05 && middleUp && ringUp && pinkyUp;
     }
 
     isPinch(landmarks) {
@@ -217,8 +223,9 @@ export class HandTracker {
         const indexTip = landmarks[8];
         const dist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
         const middleDown = landmarks[12].y > landmarks[10].y;
-
-        return dist < 0.08 && middleDown;
+        const ringDown = landmarks[16].y > landmarks[14].y;
+        const pinkyDown = landmarks[20].y > landmarks[18].y;
+        return dist < 0.06 && middleDown && ringDown && pinkyDown;
     }
 
     isOneFingerUp(landmarks) {
@@ -234,44 +241,30 @@ export class HandTracker {
         const delta = this.handX - this.prevHandX;
         let dir = 0;
 
-        if (delta > 40) {
-            dir = 1;
-        } else if (delta < -40) {
-            dir = -1;
-        }
+        if (delta > 15) dir = 1;
+        else if (delta < -15) dir = -1;
 
         if (dir !== 0) {
             const lastEntry = this.waveHistory[this.waveHistory.length - 1];
             if (!lastEntry || lastEntry.dir !== dir) {
-                this.waveHistory.push({ time: now, dir: dir });
-                console.log("Wave entry added. Direction:", dir, "Total entries:", this.waveHistory.length);
+                this.waveHistory.push({ time: now, dir });
+                console.log("Wave entry:", dir, "total:", this.waveHistory.length);
             }
         }
 
-        this.waveHistory = this.waveHistory.filter(entry => now - entry.time < 3000);
+        this.waveHistory = this.waveHistory.filter(e => now - e.time < 2000);
 
-        if (this.waveHistory.length >= 3) {
-            console.log("Wave gesture detected!");
-            this.currentGesture = "WAVE";
+        if (this.waveHistory.length >= 4) {
+            console.log("Wave detected!");
             this.waveHistory = [];
+            this.prevHandX = this.handX;
+            return true;
         }
 
         this.prevHandX = this.handX;
+        return false;
     }
 
-    drawLandmarks(landmarks) {
-        this.ctx.fillStyle = "rgb(0, 255, 0)";
-        this.ctx.strokeStyle = "rgb(0, 255, 0)";
-        this.ctx.lineWidth = 2;
-
-        for (const lm of landmarks) {
-            const x = (1 - lm.x) * this.canvas.width;
-            const y = lm.y * this.canvas.height;
-            this.ctx.beginPath();
-            this.ctx.arc(x, y, 4, 0, Math.PI * 2);
-            this.ctx.fill();
-        }
-    }
     _updateGestureBadge(gesture) {
         if (!this.gestureBadge) {
             this.gestureBadge = document.getElementById("gestureBadge");
@@ -290,17 +283,53 @@ export class HandTracker {
         };
 
         const label = gestureLabels[gesture];
+        if (!label) return;
 
-        if (label) {
-            this.gestureBadge.textContent = label;
-            this.gestureBadge.classList.add("visible");
+        this.gestureBadge.textContent = label;
+        this.gestureBadge.classList.add("visible");
 
-            if (this.gestureBadgeTimer) clearTimeout(this.gestureBadgeTimer);
+        if (this.gestureBadgeTimer) clearTimeout(this.gestureBadgeTimer);
 
-            this.gestureBadgeTimer = setTimeout(() => {
-                this.gestureBadge.classList.remove("visible");
-            }, 1500);
+        this.gestureBadgeTimer = setTimeout(() => {
+            this.gestureBadge.classList.remove("visible");
+        }, 1500);
+    }
+
+    drawLandmarks(landmarks) {
+        this.ctx.fillStyle = "rgb(0, 255, 0)";
+        this.ctx.strokeStyle = "rgb(0, 255, 0)";
+        this.ctx.lineWidth = 2;
+
+        for (const lm of landmarks) {
+            const x = (1 - lm.x) * this.canvas.width;
+            const y = lm.y * this.canvas.height;
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, 4, 0, Math.PI * 2);
+            this.ctx.fill();
         }
+    }
+
+    destroy() {
+        if (this.freezeCheckInterval) {
+            clearInterval(this.freezeCheckInterval);
+            this.freezeCheckInterval = null;
+        }
+        if (this.camera) {
+            try { this.camera.stop(); } catch (e) { }
+            this.camera = null;
+        }
+        if (this.hands) {
+            try { this.hands.close(); } catch (e) { }
+            this.hands = null;
+        }
+        if (this.video && this.video.srcObject) {
+            try {
+                this.video.srcObject.getTracks().forEach(track => track.stop());
+                this.video.srcObject = null;
+            } catch (e) { }
+        }
+        if (this.gestureBadgeTimer) clearTimeout(this.gestureBadgeTimer);
+        console.log("HandTracker destroyed");
     }
 
     isHandDetected() { return this.detected; }
@@ -308,13 +337,4 @@ export class HandTracker {
     getHandY() { return this.handY; }
     getCurrentGesture() { return this.currentGesture; }
     getPreviousGesture() { return this.previousGesture; }
-
-    destroy() {
-        if (this.freezeCheckInterval) clearInterval(this.freezeCheckInterval);
-        if (this.camera) {
-            try {
-                this.camera.stop();
-            } catch (e) { }
-        }
-    }
 }

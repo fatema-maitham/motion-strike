@@ -51,9 +51,10 @@ let bird, pipes, score, frameCount;
 let gameState = "MENU";
 let lastTime = 0;
 let pipeTimer = 0;
-
 let sounds = {};
 let isMuted = false;
+let gameOverSince = 0;
+let peaceSignStart = 0;
 
 function playSound(name) {
     if (isMuted || !sounds[name]) return;
@@ -91,22 +92,29 @@ window.addEventListener("DOMContentLoaded", () => {
     });
 
     gestureSystem.on("THUMBS_UP", () => {
-        if (gameState === "MENU" || gameState === "GAMEOVER") {
+        if (gameState === "MENU") {
+            resetGame();
+        } else if (gameState === "GAMEOVER") {
+            if (performance.now() - gameOverSince < 1500) return;
             resetGame();
         }
     });
 
     gestureSystem.on("PEACE_SIGN", () => {
+        const now = Date.now();
         if (gameState === "PLAYING") {
+            if (!peaceSignStart) peaceSignStart = now;
+            if (now - peaceSignStart < 500) return;
             const prev = handTracker.getPreviousGesture();
-            if (prev === "OPEN_PALM") return;
-
+            if (prev === "OPEN_PALM") { peaceSignStart = 0; return; }
             gameState = "PAUSED";
             if (sounds.bgm) sounds.bgm.pause();
+            peaceSignStart = 0;
         } else if (gameState === "PAUSED") {
             gameState = "PLAYING";
             lastTime = performance.now();
             if (sounds.bgm) sounds.bgm.play().catch(() => { });
+            peaceSignStart = 0;
         }
     });
 
@@ -139,6 +147,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
     handTracker.setup();
 
+    setInterval(() => {
+        if (handTracker.getCurrentGesture() !== "PEACE_SIGN") peaceSignStart = 0;
+    }, 100);
+
     const unlockAudio = () => {
         for (const audio of Object.values(sounds)) {
             if (audio) {
@@ -148,22 +160,18 @@ window.addEventListener("DOMContentLoaded", () => {
                 audio.currentTime = 0;
             }
         }
-
         if (sounds.bgm) {
             sounds.bgm.volume = 0.2;
             sounds.bgm.play().catch(() => { });
         }
-
         if (sounds.flap) sounds.flap.volume = 0.7;
         if (sounds.score) sounds.score.volume = 0.7;
         if (sounds.hit) sounds.hit.volume = 0.7;
         if (sounds.wingLower) sounds.wingLower.volume = 0.5;
         if (sounds.die) sounds.die.volume = 0.8;
-
         document.removeEventListener("click", unlockAudio);
         document.removeEventListener("touchstart", unlockAudio);
     };
-
     document.addEventListener("click", unlockAudio);
     document.addEventListener("touchstart", unlockAudio);
 });
@@ -172,17 +180,13 @@ function resizeCanvas() {
     const stage = document.querySelector(".game-stage");
     const maxW = stage.clientWidth - 40;
     const maxH = stage.clientHeight - 40;
-
     const ratio = GAME_WIDTH / GAME_HEIGHT;
-
     let dw = maxW;
     let dh = maxW / ratio;
-
     if (dh > maxH) {
         dh = maxH;
         dw = maxH * ratio;
     }
-
     canvas.style.width = Math.floor(dw) + "px";
     canvas.style.height = Math.floor(dh) + "px";
 }
@@ -194,13 +198,12 @@ function resetGame() {
     frameCount = 0;
     pipeTimer = 0;
     gameState = "PLAYING";
+    gameOverSince = 0;
     lastTime = performance.now();
-
     if (sounds.bgm) {
         sounds.bgm.volume = 0.2;
         sounds.bgm.play().catch(() => { });
     }
-
     updateHUD();
 }
 
@@ -211,11 +214,13 @@ function onKey(e) {
             bird.flap();
             playSound("flap");
             playSound("wingLower");
-        } else if (gameState === "MENU" || gameState === "GAMEOVER") {
+        } else if (gameState === "MENU") {
+            resetGame();
+        } else if (gameState === "GAMEOVER") {
+            if (performance.now() - gameOverSince < 1500) return;
             resetGame();
         }
     }
-
     if (e.code === "KeyP") {
         e.preventDefault();
         if (gameState === "PLAYING") {
@@ -227,12 +232,10 @@ function onKey(e) {
             if (sounds.bgm) sounds.bgm.play().catch(() => { });
         }
     }
-
     if (e.code === "KeyM") {
         isMuted = !isMuted;
         console.log("Audio muted:", isMuted);
     }
-
     if (e.code === "Escape") {
         if (gameState === "PAUSED" || gameState === "MENU" || gameState === "GAMEOVER") {
             window.location.href = "../games.html";
@@ -245,7 +248,10 @@ function onTap() {
         bird.flap();
         playSound("flap");
         playSound("wingLower");
-    } else if (gameState === "MENU" || gameState === "GAMEOVER") {
+    } else if (gameState === "MENU") {
+        resetGame();
+    } else if (gameState === "GAMEOVER") {
+        if (performance.now() - gameOverSince < 1500) return;
         resetGame();
     }
 }
@@ -254,29 +260,22 @@ function loop(now) {
     let dt = (now - lastTime) / 1000;
     dt = Math.min(dt, 0.1);
     lastTime = now;
-
     update(dt);
     draw();
-
     requestAnimationFrame(loop);
 }
 
 function update(dt) {
     if (gameState !== "PLAYING") return;
-
     frameCount++;
     pipeTimer += dt * 1000;
-
     if (pipeTimer >= PIPE_INTERVAL) {
         pipeTimer = 0;
         pipes.push(new PipePair(GAME_WIDTH, GAME_HEIGHT, assets));
     }
-
     bird.update(dt);
-
     for (const pipe of pipes) {
         pipe.update(dt);
-
         if (!pipe.scored && pipe.x + pipe.width < bird.x) {
             pipe.scored = true;
             score++;
@@ -284,21 +283,20 @@ function update(dt) {
             updateHUD();
         }
     }
-
     pipes = pipes.filter(p => !p.isOffScreen());
-
     if (frameCount > GRACE_FRAMES) {
         if (bird.isOutOfBounds(GAME_HEIGHT) || pipes.some(p => birdHitPipe(bird, p))) {
-            gameState = "GAMEOVER";
-            playSound("die");
-            playSound("hit");
-
-            if (sounds.bgm) {
-                sounds.bgm.pause();
-                sounds.bgm.currentTime = 0;
+            if (gameState !== "GAMEOVER") {
+                gameState = "GAMEOVER";
+                gameOverSince = performance.now();
+                playSound("die");
+                playSound("hit");
+                if (sounds.bgm) {
+                    sounds.bgm.pause();
+                    sounds.bgm.currentTime = 0;
+                }
+                updateHUD();
             }
-
-            updateHUD();
         }
     }
 }
@@ -306,21 +304,16 @@ function update(dt) {
 function draw() {
     ctx.imageSmoothingEnabled = true;
     ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-
     if (assets.background) {
         ctx.drawImage(assets.background, 0, 0, GAME_WIDTH, GAME_HEIGHT);
     } else {
         ctx.fillStyle = "#70c5ce";
         ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     }
-
     if (gameState !== "MENU") {
-        for (const pipe of pipes) {
-            pipe.draw(ctx);
-        }
+        for (const pipe of pipes) pipe.draw(ctx);
         bird.draw(ctx);
     }
-
     drawOverlay();
 }
 
@@ -355,7 +348,6 @@ function drawCenterText(text, size, yOffset = 0) {
     ctx.lineWidth = 3;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-
     const y = GAME_HEIGHT / 2 + yOffset;
     ctx.strokeText(text, GAME_WIDTH / 2, y);
     ctx.fillText(text, GAME_WIDTH / 2, y);
