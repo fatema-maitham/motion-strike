@@ -69,7 +69,8 @@ img {
 }
 
 .camera-label {
-    font-size: 14px;
+    font-family: "Pink Lemonade", sans-serif;
+    font-size: 16px;
     color: rgba(0, 0, 0, 0.5);
     text-transform: uppercase;
     letter-spacing: 1px;
