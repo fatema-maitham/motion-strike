@@ -121,6 +121,15 @@ window.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    const backBtn = document.getElementById("backBtn");
+    if (backBtn) {
+        backBtn.addEventListener("click", () => {
+            if (gameState === "PAUSED" || gameState === "MENU" || gameState === "GAMEOVER") {
+                window.location.href = "../games.html";
+            }
+        });
+    }
+
     window.addEventListener("keydown", onKey);
     canvas.addEventListener("click", onTap);
 

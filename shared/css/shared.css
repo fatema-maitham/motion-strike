@@ -229,3 +229,42 @@ img {
         width: 100%;
     }
 }
+
+.corner-btn-left {
+    position: fixed;
+    top: 24px;
+    left: 34px;
+    z-index: 500;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.corner-btn-left img {
+    width: 110px;
+    height: auto;
+    object-fit: contain;
+}
+
+.corner-btn-left:hover {
+    transform: scale(1.08);
+}
+
+@media (max-width: 1024px) {
+    .corner-btn-left img {
+        width: 85px;
+    }
+}
+
+@media (max-width: 768px) {
+    .corner-btn-left {
+        top: 12px;
+        left: 16px;
+    }
+
+    .corner-btn-left img {
+        width: 68px;
+    }
+}

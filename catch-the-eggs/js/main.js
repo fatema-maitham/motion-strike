@@ -92,6 +92,14 @@ window.addEventListener("DOMContentLoaded", () => {
 
         const gestureSystem = new GestureSystem(handTracker);
 
+        const backBtn = document.getElementById("backBtn");
+        if (backBtn) {
+            backBtn.addEventListener("click", () => {
+                if (game.state === "PAUSED" || game.state === "MENU" || game.state === "GAME_OVER") {
+                    window.location.href = "../games.html";
+                }
+            });
+        }
         gestureSystem.on("THUMBS_UP", () => {
             if (game.state === "MENU" || game.state === "GAME_OVER") {
                 game.restart();
