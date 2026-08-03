@@ -138,41 +138,34 @@ window.addEventListener("DOMContentLoaded", () => {
         const key = e.key;
         const code = e.code;
 
-        try {
-            unlockAudio(sounds);
-        } catch (err) {
-            // audio unlock failed — game still works
-        }
+        try { unlockAudio(sounds); } catch (err) { }
 
-        if (key === "Enter" || code === "Enter" || code === "NumpadEnter") {
+        // Always use the global game reference
+        const g = window.CATCHY?.game;
+        if (!g) return;
+
+        // ENTER (any) or SPACE → Start / Restart
+        if ((key === "Enter" || code === "Enter" || code === "NumpadEnter" || key === " ") &&
+            (g.state === "MENU" || g.state === "GAME_OVER")) {
             e.preventDefault();
-
-            if (game.state === "MENU" || game.state === "GAME_OVER") {
-                game.restart();
-            }
+            g.restart();
             return;
         }
 
-        if (key === "p" || key === "P") {
-            if (game.state === "PLAYING") {
-                game.pause();
-            } else if (game.state === "PAUSED") {
-                game.resume();
-            }
+        if ((key === "p" || key === "P")) {
+            e.preventDefault();
+            if (g.state === "PLAYING") g.pause();
+            else if (g.state === "PAUSED") g.resume();
             return;
         }
 
         if (key === "m" || key === "M") {
-            game.toggleMute();
+            g.toggleMute();
             return;
         }
 
         if (key === "Escape") {
-            if (
-                game.state === "PAUSED" ||
-                game.state === "MENU" ||
-                game.state === "GAME_OVER"
-            ) {
+            if (g.state === "PAUSED" || g.state === "MENU" || g.state === "GAME_OVER") {
                 window.location.href = "../games.html";
             }
         }

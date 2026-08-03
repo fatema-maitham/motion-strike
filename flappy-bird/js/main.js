@@ -92,7 +92,7 @@ window.addEventListener("DOMContentLoaded", () => {
         if (gameState === "MENU") {
             resetGame();
         } else if (gameState === "GAMEOVER") {
-            if (performance.now() - gameOverSince < 1500) return;
+            if (performance.now() - gameOverSince < 800) return;
             resetGame();
         }
     });
@@ -214,7 +214,7 @@ function onKey(e) {
         } else if (gameState === "MENU") {
             resetGame();
         } else if (gameState === "GAMEOVER") {
-            if (performance.now() - gameOverSince < 1500) return;
+            if (performance.now() - gameOverSince < 800) return;
             resetGame();
         }
     }
@@ -248,7 +248,7 @@ function onTap() {
     } else if (gameState === "MENU") {
         resetGame();
     } else if (gameState === "GAMEOVER") {
-        if (performance.now() - gameOverSince < 1500) return;
+        if (performance.now() - gameOverSince < 800) return;
         resetGame();
     }
 }
