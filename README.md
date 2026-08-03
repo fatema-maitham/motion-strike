@@ -236,3 +236,20 @@ Traditional browser games rely on keyboards and mice. Motion Strike removes that
 - [ ] Add an animated onboarding tutorial for first-time players
 - [ ] Improve gesture accuracy with custom trained models
 - [ ] Add a sound settings panel with a volume slider
+
+---
+
+## Screenshots
+ 
+### Landing Page
+![Landing Page](assets/screenshots/landing-page.png)
+ 
+### Game Hub
+![Game Hub](assets/screenshots/game-hub.png)
+ 
+### Catch the Eggs
+![Catch the Eggs](assets/screenshots/catch-the-eggs.png)
+ 
+### Flappy Bird
+![Flappy Bird](assets/screenshots/flappy-bird.png)
+
