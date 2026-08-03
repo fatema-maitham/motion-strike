@@ -6,26 +6,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catch the Eggs</title>
 
-    <link rel="stylesheet" href="../../shared/css/shared.css">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="../shared/css/shared.css">
     <link rel="stylesheet" href="css/game.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="../css/landing.css">
 </head>
 
 <body>
     <div id="gestureBadge"></div>
+
     <button id="backBtn" class="corner-btn-left">
         <img src="../assets/images/back.png" alt="Back">
     </button>
+
+    <button id="howToPlayBtn" class="corner-btn-right">
+        <img src="../assets/images/how-to-play.png" alt="How to Play">
+    </button>
+
     <div class="hud-top-left-cte">
         <div class="cte-score">Score: <span id="cteScore">0</span></div>
-        <div class="cte-hearts" id="cteHearts">
-            <img src="assets/images/heart.png" alt="life">
-            <img src="assets/images/heart.png" alt="life">
-            <img src="assets/images/heart.png" alt="life">
+        <div id="cteHearts" class="cte-hearts">
+            <img src="assets/images/heart.png" alt="Heart">
+            <img src="assets/images/heart.png" alt="Heart">
+            <img src="assets/images/heart.png" alt="Heart">
         </div>
     </div>
-    <main class="game-shell">
 
+    <main class="game-shell">
         <section class="game-stage">
             <canvas id="gameCanvas"></canvas>
         </section>
@@ -35,12 +42,64 @@
             <canvas id="webcamCanvas" width="640" height="480"></canvas>
             <video id="webcamVideo" autoplay playsinline muted></video>
         </aside>
-
     </main>
+
+    <div id="howToPlayPanel" class="panel-overlay hidden">
+        <div class="panel-box">
+            <button id="closePanelBtn" class="panel-close">
+                <img src="../assets/images/back.png" alt="Close">
+            </button>
+            <h2 class="panel-title">Catch the Eggs</h2>
+
+            <div class="panel-section">
+                <h3 class="panel-subtitle">Menu Controls</h3>
+                <div class="gesture-row"><span class="gesture-icon">👍</span><span class="gesture-name">Thumbs
+                        Up</span><span class="gesture-action">Start / Restart</span></div>
+                <div class="gesture-row"><span class="gesture-icon">✌️</span><span class="gesture-name">Peace
+                        Sign</span><span class="gesture-action">Pause / Resume</span></div>
+                <div class="gesture-row"><span class="gesture-icon">🤏</span><span
+                        class="gesture-name">Pinch</span><span class="gesture-action">Mute / Unmute</span></div>
+                <div class="gesture-row"><span class="gesture-icon">👋</span><span class="gesture-name">Wave</span><span
+                        class="gesture-action">Back to Menu</span></div>
+            </div>
+
+            <div class="panel-section">
+                <h3 class="panel-subtitle">Game Controls</h3>
+                <div class="gesture-row"><span class="gesture-icon">⬅️</span><span class="gesture-name">Move Hand
+                        Left</span><span class="gesture-action">Basket Left</span></div>
+                <div class="gesture-row"><span class="gesture-icon">➡️</span><span class="gesture-name">Move Hand
+                        Right</span><span class="gesture-action">Basket Right</span></div>
+            </div>
+
+            <div class="panel-section">
+                <h3 class="panel-subtitle">Keyboard</h3>
+                <div class="gesture-row"><span class="gesture-icon">⌨️</span><span class="gesture-name">Enter /
+                        Space</span><span class="gesture-action">Start / Restart</span></div>
+                <div class="gesture-row"><span class="gesture-icon">⌨️</span><span class="gesture-name">Arrow Keys / A
+                        D</span><span class="gesture-action">Move Basket</span></div>
+                <div class="gesture-row"><span class="gesture-icon">⌨️</span><span class="gesture-name">P</span><span
+                        class="gesture-action">Pause / Resume</span></div>
+                <div class="gesture-row"><span class="gesture-icon">⌨️</span><span class="gesture-name">M</span><span
+                        class="gesture-action">Mute / Unmute</span></div>
+                <div class="gesture-row"><span class="gesture-icon">⌨️</span><span
+                        class="gesture-name">Escape</span><span class="gesture-action">Back to Menu</span></div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
+    <script>
+        const hBtn = document.getElementById("howToPlayBtn");
+        const hPanel = document.getElementById("howToPlayPanel");
+        const hClose = document.getElementById("closePanelBtn");
+        hBtn?.addEventListener("click", () => hPanel.classList.remove("hidden"));
+        hClose?.addEventListener("click", () => hPanel.classList.add("hidden"));
+        hPanel?.addEventListener("click", (e) => { if (e.target === hPanel) hPanel.classList.add("hidden"); });
+        window.addEventListener("keydown", (e) => { if (e.code === "KeyH") hPanel.classList.toggle("hidden"); });
+    </script>
 
     <script type="module" src="js/main.js"></script>
 </body>

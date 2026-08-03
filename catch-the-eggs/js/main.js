@@ -220,6 +220,22 @@ window.addEventListener("DOMContentLoaded", () => {
         });
 
         handTracker.setup();
+
+        // How to Play panel gesture controls
+        gestureSystem.on("OK", () => {
+            try { unlockAudio(sounds); } catch (err) { }
+            const panel = document.getElementById("howToPlayPanel");
+            if (!panel) return;
+
+            if (panel.classList.contains("hidden")) {
+                // Only open when not playing
+                if (game.state === "MENU" || game.state === "GAME_OVER" || game.state === "PAUSED") {
+                    panel.classList.remove("hidden");
+                }
+            } else {
+                panel.classList.add("hidden");
+            }
+        });
     } catch (error) {
         console.error("Hand tracking failed, keyboard still works:", error);
     }

@@ -296,3 +296,45 @@ img {
 #gestureBadge.visible {
     opacity: 1;
 }
+
+/* ==========================================
+   Bottom Right Button (How to Play in games)
+========================================== */
+.corner-btn-right {
+    position: fixed;
+    bottom: 24px;
+    right: 34px;
+    z-index: 500;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.corner-btn-right img {
+    width: 110px;
+    height: auto;
+    object-fit: contain;
+}
+
+.corner-btn-right:hover {
+    transform: scale(1.08);
+}
+
+@media (max-width: 1024px) {
+    .corner-btn-right img {
+        width: 85px;
+    }
+}
+
+@media (max-width: 768px) {
+    .corner-btn-right {
+        bottom: 12px;
+        right: 16px;
+    }
+
+    .corner-btn-right img {
+        width: 68px;
+    }
+}

@@ -126,6 +126,20 @@ window.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // How to Play panel gesture controls
+    gestureSystem.on("OK", () => {
+        const panel = document.getElementById("howToPlayPanel");
+        if (!panel) return;
+
+        if (panel.classList.contains("hidden")) {
+            if (gameState === "MENU" || gameState === "GAMEOVER" || gameState === "PAUSED") {
+                panel.classList.remove("hidden");
+            }
+        } else {
+            panel.classList.add("hidden");
+        }
+    });
+
     const backBtn = document.getElementById("backBtn");
     if (backBtn) {
         backBtn.addEventListener("click", () => {
