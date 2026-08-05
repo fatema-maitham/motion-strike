@@ -64,7 +64,7 @@ export class Game {
         this.score = 0;
         this.lives = 3;
 
-        // ✅ destroy old player to remove its keydown listeners
+        // destroy old player to remove its keydown listeners
         if (this.player) {
             this.player.destroy();
         }

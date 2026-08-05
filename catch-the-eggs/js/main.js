@@ -42,8 +42,8 @@ function createSounds(sources) {
 
 function resizeCanvas(canvas) {
     const stage = document.querySelector(".game-stage");
-    const maxW = stage.clientWidth - 150;
-    const maxH = stage.clientHeight - 150;
+    const maxW = stage.clientWidth - 210;
+    const maxH = stage.clientHeight - 210;
 
     const ratio = 16 / 10;
 
