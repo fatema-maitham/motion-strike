@@ -21,7 +21,7 @@ Control the bird through obstacles and survive as long as possible. Use an open 
 ## Getting Started
 
 ### Deployed Game
-[Play](https://your-deployed-link-here.com)
+[Play](https://fatema-maitham.github.io/motion-strike/)
 
 ### Planning Board
 [Planning File](./plan.md)

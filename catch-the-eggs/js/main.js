@@ -8,7 +8,7 @@ const ASSET_SOURCES = {
     goldenEgg: "assets/images/golden-egg.png",
     bomb: "assets/images/bomb.png",
     heart: "assets/images/heart.png",
-    farmerIdle: "assets/images/farmer-idle.png",
+    farmerIdle: "assets/images/farmer-Idle.png",
     farmerHappy: "assets/images/farmer-happy.png",
     farmerSad: "assets/images/farmer-sad.png",
     sparkle: "assets/images/starparticleeffect.png",
