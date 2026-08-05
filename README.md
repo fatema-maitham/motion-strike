@@ -42,7 +42,7 @@ This project uses JavaScript ES6 modules (`type="module"`), so opening the HTML 
 
 1. Open the project in Visual Studio Code.
 2. Install the **Live Server** extension by Ritwick Dey.
-3. Right-click `shared/index.html` (or your main entry page) and select **Open with Live Server**.
+3. Right-click `index.html` and select **Open with Live Server**.
 
 ---
 
@@ -192,12 +192,12 @@ Traditional browser games rely on keyboards and mice. Motion Strike removes that
 
 ## Next Steps
 
-- [ ] Add more games to the platform, such as Snake, Pong, and Space Invaders
-- [ ] Add a high score leaderboard using local storage
-- [ ] Add a difficulty selection screen before each game
-- [ ] Add an animated onboarding tutorial for first-time players
-- [ ] Improve gesture accuracy with custom trained models
-- [ ] Add a sound settings panel with a volume slider
+- Add more games to the platform, such as Snake, Pong, and Space Invaders
+- Add a high score leaderboard using local storage
+- Add a difficulty selection screen before each game
+- Add an animated onboarding tutorial for first-time players
+- Improve gesture accuracy with custom trained models
+- Add a sound settings panel with a volume slider
 
 ---
 
