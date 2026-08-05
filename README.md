@@ -34,6 +34,18 @@ Control the bird through obstacles and survive as long as possible. Use an open 
 
 ---
 
+## Running the Game Locally
+
+This project uses JavaScript ES6 modules (`type="module"`), so opening the HTML files directly (`file://`) will cause browser security (CORS) errors. Run the project using a local development server instead.
+
+### VS Code Live Server (Recommended)
+
+1. Open the project in Visual Studio Code.
+2. Install the **Live Server** extension by Ritwick Dey.
+3. Right-click `shared/index.html` (or your main entry page) and select **Open with Live Server**.
+
+---
+
 ## Win and Loss Conditions
 
 ### Catch the Eggs
