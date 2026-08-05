@@ -80,6 +80,9 @@ function unlockAudio(sounds) {
 
     for (const audio of Object.values(sounds)) {
         if (!audio) continue;
+        // Skip bgm – it will be unlocked naturally by the restart gesture
+        if (audio === sounds.bgm) continue;
+
         audio.volume = 0;
         audio.play().then(() => {
             audio.pause();
@@ -87,9 +90,10 @@ function unlockAudio(sounds) {
         }).catch(() => { });
     }
 
-    if (sounds.bgm) sounds.bgm.volume = 0.05;
+    // Set proper volumes for sound effects (bgm stays untouched)
     if (sounds.catchEgg) sounds.catchEgg.volume = 1.0;
     if (sounds.bomb) sounds.bomb.volume = 1.0;
+    // bgm volume will be set in game.restart()
 }
 
 window.addEventListener("DOMContentLoaded", () => {
