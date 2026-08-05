@@ -34,6 +34,29 @@ Control the bird through obstacles and survive as long as possible. Use an open 
 
 ---
 
+## Win and Loss Conditions
+
+### Catch the Eggs
+
+- Catching a normal egg increases the score.
+- Catching a golden egg gives bonus points.
+- Catching a bomb removes one life.
+- The player starts with three lives.
+- The game ends when all lives are lost.
+- A `GAME OVER` message and final score are displayed.
+- The player can restart using the Thumbs Up gesture, Enter, or Space.
+
+### Flappy Bird
+
+- The score increases when the bird passes through a pipe.
+- The bird flaps upward using the Open Palm gesture or Space.
+- The game ends when the bird hits a pipe.
+- The game also ends when the bird hits the top or bottom of the screen.
+- A `GAME OVER` message and final score are displayed.
+- The player can restart using the Thumbs Up gesture or Space.
+
+---
+
 ## Gesture Controls
 
 ### Shared Menu Gestures (All Games)
@@ -100,112 +123,39 @@ Control the bird through obstacles and survive as long as possible. Use an open 
 
 ```
 motion-strike
-├── plan.md                          # Planning document
-├── README.md                        # Project documentation
-│
-├── assets
-│   ├── games
-│   │   ├── catch-the-eggs.webp      # Game thumbnail
-│   │   └── flappy-bird.webp         # Game thumbnail
-│   └── images
-│       ├── back.png                 # Back button image
-│       ├── how-to-play.png          # How to play button image
-│       ├── logo.png                 # Main logo
-│       ├── logo1.png                # Alternate logo
-│       └── play.png                 # Play button image
-│
-├── catch-the-eggs
-│   ├── assets
-│   │   ├── fonts
-│   │   │   └── PinkLemonade-Regular.ttf   # Game font
-│   │   ├── images
-│   │   │   ├── background.png             # Game background
-│   │   │   ├── bomb.png                   # Bomb object
-│   │   │   ├── egg.png                    # Normal egg
-│   │   │   ├── farmer-happy.png           # Player happy expression
-│   │   │   ├── farmer-Idle.png            # Player idle expression
-│   │   │   ├── farmer-sad.png             # Player sad expression
-│   │   │   ├── golden-egg.png             # Golden egg, bonus
-│   │   │   ├── heart.png                  # Full life heart
-│   │   │   └── starparticleeffect.png     # Sparkle effect
-│   │   └── sounds
-│   │       ├── bgm.mp3                    # Background music
-│   │       ├── bomb.wav                   # Bomb catch sound
-│   │       └── catch.wav                  # Egg catch sound
-│   ├── css
-│   │   ├── game.css                       # Canvas styles
-│   │   └── style.css                      # HUD and font styles
-│   ├── js
-│   │   ├── audio.js                       # Audio manager
-│   │   ├── collision.js                   # Collision detection
-│   │   ├── effects.js                     # Particle effects
-│   │   ├── egg.js                         # Falling objects and spawn system
-│   │   ├── game.js                        # Main game class and state machine
-│   │   ├── levels.js                      # Difficulty progression
-│   │   ├── main.js                        # Entry point, input, hand tracking
-│   │   ├── player.js                      # Player, farmer, movement and drawing
-│   │   └── utils.js                       # Utility functions
-│   └── index.html                         # Game page
-│
-├── css
-│   ├── hub.css                            # Game hub page styles
-│   └── landing.css                        # Landing page and panel styles
-│
-├── flappy-bird
-│   ├── assets
-│   │   ├── images
-│   │   │   ├── background.png             # Game background
-│   │   │   ├── bottom-pipe.png            # Bottom pipe image
-│   │   │   ├── flappy-bird.png            # Bird sprite
-│   │   │   └── top-pipe.png               # Top pipe image
-│   │   └── sounds
-│   │       ├── bgm.mp3                    # Background music
-│   │       ├── flap.mp3                   # Flap sound
-│   │       ├── hit.mp3                    # Hit or death sound
-│   │       └── score.mp3                  # Score point sound
-│   ├── css
-│   │   ├── game.css                       # Canvas styles
-│   │   └── style.css                      # HUD and font styles
-│   ├── js
-│   │   ├── bird.js                        # Bird physics and drawing
-│   │   ├── collision.js                   # Collision detection
-│   │   ├── main.js                        # Entry point, game loop, input
-│   │   ├── pipe.js                        # Pipe generation and drawing
-│   │   └── utils.js                       # Re-exports from shared utils
-│   └── index.html                         # Game page
-│
-├── js
-│   ├── hub.js                             # Game hub logic and gesture control
-│   └── landing.js                         # Landing page logic and gesture control
-│
-└── shared
-    ├── css
-    │   └── shared.css                     # Global styles, layout, camera panel
-    ├── fonts
-    │   ├── bit5x3.ttf                     # Pixel font for Flappy Bird
-    │   └── PinkLemonade-Regular.ttf       # Fun font for Catch the Eggs
-    ├── js
-    │   ├── gestureSystem.js               # Gesture event system and cooldowns
-    │   ├── handTracking.js                # MediaPipe hand tracking and detection
-    │   └── utils.js                       # Shared utility functions
-    ├── games.html                         # Game selection hub page
-    └── index.html                         # Landing page
+├── assets/                  # Shared logos, buttons, and game thumbnails
+├── catch-the-eggs/          # Catch the Eggs game
+│   ├── assets/              # Images, fonts, and sounds
+│   ├── css/
+│   ├── js/
+│   └── index.html
+├── flappy-bird/             # Flappy Bird game
+│   ├── assets/
+│   ├── css/
+│   ├── js/
+│   └── index.html
+├── shared/                  # Shared resources used by both games
+│   ├── css/                 # Global styles
+│   ├── fonts/
+│   ├── js/                  # MediaPipe hand tracking, gesture system, utilities
+│   ├── games.html           # Game selection hub
+│   └── index.html           # Landing page
+├── css/                     # Landing page and hub styles
+├── js/                      # Landing page and hub scripts
+├── plan.md                  # Project planning document
+└── README.md                # Project documentation
 ```
 
 ---
 
 ## Technologies Used
-
-| Technology | Purpose |
-|---|---|
-| HTML5 | Page structure and canvas rendering |
-| CSS3 | Styling, layout, Flexbox, animations |
-| JavaScript ES6+ | Game logic, gesture handling, modules |
-| Canvas API | Game rendering for both games |
-| MediaPipe Hands | Real-time hand and gesture detection |
-| MediaPipe Camera Utils | Webcam access and frame processing |
-| Web Audio API | Sound effects and background music |
-
+- HTML5
+- CSS3
+- JavaScript (ES6)
+- Canvas API
+- MediaPipe Hands
+- Web Audio API
+  
 ---
 
 ## Attributions
@@ -217,7 +167,7 @@ motion-strike
 | Press Start 2P Font | [Google Fonts](https://fonts.google.com/specimen/Press+Start+2P) |
 | Pink Lemonade Font | [dafont.com](https://www.dafont.com/pink-lemonade.font?l[]=10&l[]=1) |
 | Music | [Pixabay](https://pixabay.com) |
-| Art | Baelfin, [baelfin.com](https://www.baelfin.com) |
+| Art | Baelfin, ChatGPT|
 | Sound Effects | [freesound.org](https://freesound.org) |
  
 ---
