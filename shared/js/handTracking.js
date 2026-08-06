@@ -86,11 +86,9 @@ export class HandTracker {
                 this._checkFreeze();
             }, 2000);
 
-            console.log("Hand tracking ready");
             this.isSetupInProgress = false;
 
         } catch (err) {
-            console.error("Hand tracking setup failed:", err);
             this.isSetupInProgress = false;
             // Retry after 3 seconds if something went wrong
             setTimeout(() => this.setup(), 3000);
@@ -116,7 +114,6 @@ export class HandTracker {
                         // Remember when we got the last frame (for freeze detection)
                         this.lastFrameTime = Date.now();
                     } catch (e) {
-                        console.warn("Frame processing error:", e.message);
                     }
                 },
                 width: 640,
@@ -126,10 +123,8 @@ export class HandTracker {
             // Actually turn on the camera
             await this.camera.start();
             this.lastFrameTime = Date.now();
-            console.log("Camera started");
 
         } catch (err) {
-            console.error("Camera start failed:", err);
             // Retry if camera access fails
             setTimeout(() => this._startCamera(), 3000);
         }
@@ -143,7 +138,6 @@ export class HandTracker {
         const timeSinceLastFrame = now - this.lastFrameTime;
         // If no frame for more than 3 seconds, assume the camera froze
         if (this.lastFrameTime > 0 && timeSinceLastFrame > 3000) {
-            console.warn("Camera frozen! Restarting...");
             this._startCamera();
         }
     }
@@ -422,7 +416,6 @@ export class HandTracker {
             } catch (e) { }
         }
         if (this.gestureBadgeTimer) clearTimeout(this.gestureBadgeTimer);
-        console.log("HandTracker destroyed");
     }
 
     // ==========================================

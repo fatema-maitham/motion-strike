@@ -11,7 +11,7 @@ export class AudioManager {
         const audio = this.sounds[name];
         if (audio) {
             audio.currentTime = 0;
-            audio.play().catch(e => console.log("Audio play blocked until interaction"));
+            audio.play().catch(() => { });
         }
     }
 }

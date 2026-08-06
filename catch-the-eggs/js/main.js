@@ -241,7 +241,6 @@ window.addEventListener("DOMContentLoaded", () => {
             }
         });
     } catch (error) {
-        console.error("Hand tracking failed, keyboard still works:", error);
     }
 });
 

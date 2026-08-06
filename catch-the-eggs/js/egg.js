@@ -36,7 +36,6 @@ export class FallingObject {
 
         this.trailTimer = 0; // Timer for trail effect
 
-        console.log(`Spawned ${this.type} at x:${Math.round(this.x)}`);
     }
 
     update(dt) {

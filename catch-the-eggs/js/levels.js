@@ -22,7 +22,6 @@ export class LevelSystem {
 
         if (newLevel > this.currentLevel) {
             this.currentLevel = newLevel;
-            console.log(`Level up! Now at level ${this.currentLevel}`);
         }
     }
 

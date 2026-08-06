@@ -78,7 +78,7 @@ export class Game {
         if (this.sounds.bgm) {
             this.sounds.bgm.volume = this.bgmVolume;
             this.sounds.bgm.currentTime = 0;
-            this.sounds.bgm.play().catch(e => console.log("BGM play blocked"));
+            this.sounds.bgm.play().catch(() => { });
         }
     }
 
@@ -99,7 +99,7 @@ export class Game {
 
             if (this.sounds.bgm) {
                 this.sounds.bgm.volume = this.bgmVolume;
-                this.sounds.bgm.play().catch(e => console.log("BGM play blocked"));
+                this.sounds.bgm.play().catch(() => { });
             }
         }
     }

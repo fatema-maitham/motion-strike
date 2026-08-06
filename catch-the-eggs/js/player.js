@@ -51,7 +51,6 @@ export class Player {
         window.addEventListener("keydown", this._onKeyDown);
         window.addEventListener("keyup", this._onKeyUp);
 
-        console.log("Player created at:", this.x, this.y);
     }
 
     // ==========================================

@@ -117,7 +117,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
     gestureSystem.on("PINCH", () => {
         isMuted = !isMuted;
-        console.log("Audio muted:", isMuted);
     });
 
     gestureSystem.on("WAVE", () => {
@@ -245,7 +244,6 @@ function onKey(e) {
     }
     if (e.code === "KeyM") {
         isMuted = !isMuted;
-        console.log("Audio muted:", isMuted);
     }
     if (e.code === "Escape") {
         if (gameState === "PAUSED" || gameState === "MENU" || gameState === "GAMEOVER") {

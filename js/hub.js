@@ -17,7 +17,6 @@ window.addEventListener("DOMContentLoaded", () => {
         card.classList.add("selected");
 
         const gameUrl = card.getAttribute("data-game");
-        console.log("Launching game:", gameUrl);
 
         setTimeout(() => {
             window.location.href = gameUrl;

@@ -47,17 +47,14 @@ export class GestureSystem {
         // Decide what to do based on the gesture
         switch (current) {
             case "WAVE":
-                console.log("Gesture: Wave - Return to Menu");
                 this.callbacks["WAVE"]?.();
                 break;
 
             case "THUMBS_UP":
-                console.log("Gesture: Thumbs Up - Start Select");
                 this.callbacks["THUMBS_UP"]?.();
                 break;
 
             case "OK":
-                console.log("Gesture: OK - Confirm");
                 this.callbacks["OK"]?.();
                 break;
 
@@ -65,12 +62,10 @@ export class GestureSystem {
                 // Prevent accidental pause right after flapping (open palm or closed fist)
                 if (now - this.lastOpenPalmTime < 400) return;
                 if (now - this.lastClosedFistTime < 400) return;
-                console.log("Gesture: Peace Sign - Pause Resume");
                 this.callbacks["PEACE_SIGN"]?.();
                 break;
 
             case "PINCH":
-                console.log("Gesture: Pinch - Mute Unmute");
                 this.callbacks["PINCH"]?.();
                 break;
 
